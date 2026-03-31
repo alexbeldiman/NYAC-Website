@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getStaffUser } from "@/lib/auth";
+import { sendCoachPickupConfirmation } from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(
@@ -79,6 +80,12 @@ export async function POST(
 
   if (lessonError) {
     return NextResponse.json({ error: lessonError.message }, { status: 500 });
+  }
+
+  const notifMember = lesson.member as { first_name: string; last_name: string } | null;
+  const notifCoach = lesson.coach as { first_name: string; last_name: string } | null;
+  if (notifMember && notifCoach) {
+    await sendCoachPickupConfirmation(lesson, notifMember, notifCoach);
   }
 
   return NextResponse.json(lesson, { status: 200 });

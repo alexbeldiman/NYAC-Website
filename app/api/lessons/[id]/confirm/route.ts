@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { sendMemberDeclineNotification } from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(
@@ -57,6 +58,18 @@ export async function POST(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!confirmed && data.coach_id) {
+    const { data: coach } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", data.coach_id)
+      .single();
+
+    if (coach) {
+      await sendMemberDeclineNotification(data, coach);
+    }
   }
 
   return NextResponse.json(data);

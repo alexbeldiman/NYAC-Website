@@ -1,5 +1,9 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getStaffUser } from "@/lib/auth";
+import {
+  sendLessonConfirmationRequest,
+  notifyCoachesOfPickup,
+} from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -175,9 +179,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // 7. If pending_pickup, insert pickup_request
+  // Fetch member name for notifications
+  const { data: memberProfile } = await supabase
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", member_id)
+    .single();
+
+  const notifMember = memberProfile ?? { first_name: "", last_name: "" };
+
+  // 7. If pending_pickup, insert pickup_request and notify coaches
   if (status === "pending_pickup") {
     await serviceClient.from("pickup_requests").insert({ lesson_id: lesson.id });
+
+    const { data: coaches } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .in("role", ["coach", "director"]);
+
+    await notifyCoachesOfPickup(lesson, coaches ?? [], notifMember);
+  }
+
+  // If confirmed, send confirmation request to member
+  if (status === "confirmed") {
+    await sendLessonConfirmationRequest(lesson, notifMember);
   }
 
   return NextResponse.json(lesson, { status: 201 });
