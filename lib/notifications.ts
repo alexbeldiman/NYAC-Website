@@ -49,6 +49,15 @@ export async function escalatePickupToDirector(
   );
 }
 
+export async function notifyAgeException(
+  child: { first_name: string; last_name: string; date_of_birth: string | null },
+  session: { program: string; start_time: string }
+): Promise<void> {
+  console.log(
+    `Age exception: ${child.first_name} ${child.last_name} (DOB: ${child.date_of_birth}) checked into ${session.program.toUpperCase()} session at ${session.start_time} — child is under 10`
+  );
+}
+
 export async function sendMemberDeclineNotification(
   lesson: { start_time: string },
   coach: { first_name: string; last_name: string }
