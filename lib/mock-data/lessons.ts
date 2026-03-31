@@ -1,96 +1,238 @@
 // coach_id values reference COACHES in coaches.ts
-// member_id values reference MEMBERS in members.ts
+// member_id / booked_by_id values reference MEMBERS in members.ts
 // court_id values reference COURTS in courts.ts
 
-export const LESSONS = [
+export type Lesson = {
+  id: string;
+  member_id: string;
+  booked_by_id: string;
+  coach_id: string | null;
+  start_time: string;
+  duration_minutes: number;
+  status: "confirmed" | "pending_pickup" | "cancelled" | "completed";
+  is_recurring: boolean;
+  recurrence_id: string | null;
+  court_id: string | null;
+  booked_via: "member_app" | "tennis_house" | "coach";
+  confirmation_sent_at: string | null;
+  confirmed_by_member: boolean | null;
+  created_at: string;
+};
+
+export const LESSONS: Lesson[] = [
+  /* ── 1. Confirmed — Marco Reyes + Catherine Harlow (Mon) ───── */
   {
     id: "e5f6a7b8-0001-4c9d-0e1f-a5b6c7d80001",
-    coach_id: "a1b2c3d4-0001-4e5f-8a9b-c1d2e3f40001", // Marco Reyes
-    member_id: "b2c3d4e5-0001-4f6a-9b0c-d2e3f4a50001", // Catherine Harlow
+    member_id: "b2c3d4e5-0001-4f6a-9b0c-d2e3f4a50001",   // Catherine Harlow
+    booked_by_id: "b2c3d4e5-0001-4f6a-9b0c-d2e3f4a50001",
+    coach_id: "a1b2c3d4-0001-4e5f-8a9b-c1d2e3f40001",     // Marco Reyes
     start_time: "2026-03-30T08:00:00-04:00",
     duration_minutes: 60,
     status: "confirmed",
-    court_id: "d4e5f6a7-0001-4b8c-9d0e-f4a5b6c70001",  // Court 1
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-03-29T14:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-28T10:15:00-04:00",
   },
+
+  /* ── 2. Confirmed — Sandra Volkova + Robert Fenwick (Mon) ──── */
   {
     id: "e5f6a7b8-0002-4c9d-0e1f-a5b6c7d80002",
-    coach_id: "a1b2c3d4-0002-4e5f-8a9b-c1d2e3f40002", // Sandra Volkova
-    member_id: "b2c3d4e5-0002-4f6a-9b0c-d2e3f4a50002", // Robert Fenwick
-    start_time: "2026-03-30T08:30:00-04:00",
+    member_id: "b2c3d4e5-0002-4f6a-9b0c-d2e3f4a50002",   // Robert Fenwick
+    booked_by_id: "b2c3d4e5-0002-4f6a-9b0c-d2e3f4a50002",
+    coach_id: "a1b2c3d4-0002-4e5f-8a9b-c1d2e3f40002",     // Sandra Volkova
+    start_time: "2026-03-30T09:00:00-04:00",
     duration_minutes: 60,
     status: "confirmed",
-    court_id: "d4e5f6a7-0002-4b8c-9d0e-f4a5b6c70002",  // Court 2
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-03-29T14:05:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-28T11:30:00-04:00",
   },
+
+  /* ── 3. Confirmed — James Okafor + Sophie Thornton (Tue) ───── */
   {
     id: "e5f6a7b8-0003-4c9d-0e1f-a5b6c7d80003",
-    coach_id: "a1b2c3d4-0003-4e5f-8a9b-c1d2e3f40003", // James Okafor
-    member_id: "b2c3d4e5-0005-4f6a-9b0c-d2e3f4a50005", // Sophie Thornton (child)
-    start_time: "2026-03-30T09:00:00-04:00",
+    member_id: "b2c3d4e5-0005-4f6a-9b0c-d2e3f4a50005",   // Sophie Thornton (child)
+    booked_by_id: "b2c3d4e5-0004-4f6a-9b0c-d2e3f4a50004", // Michael Thornton (parent)
+    coach_id: "a1b2c3d4-0003-4e5f-8a9b-c1d2e3f40003",     // James Okafor
+    start_time: "2026-03-31T10:00:00-04:00",
     duration_minutes: 30,
     status: "confirmed",
-    court_id: "d4e5f6a7-0004-4b8c-9d0e-f4a5b6c70004",  // Court 4
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-03-30T09:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-29T08:00:00-04:00",
   },
+
+  /* ── 4. Confirmed — Priya Nair + Aisha Diallo (Tue) ───────── */
   {
     id: "e5f6a7b8-0004-4c9d-0e1f-a5b6c7d80004",
-    coach_id: "a1b2c3d4-0004-4e5f-8a9b-c1d2e3f40004", // Priya Nair
-    member_id: "b2c3d4e5-0007-4f6a-9b0c-d2e3f4a50007", // Natalia Krause
-    start_time: "2026-03-30T09:30:00-04:00",
+    member_id: "b2c3d4e5-0003-4f6a-9b0c-d2e3f4a50003",   // Aisha Diallo
+    booked_by_id: "b2c3d4e5-0003-4f6a-9b0c-d2e3f4a50003",
+    coach_id: "a1b2c3d4-0004-4e5f-8a9b-c1d2e3f40004",     // Priya Nair
+    start_time: "2026-03-31T14:00:00-04:00",
     duration_minutes: 60,
     status: "confirmed",
-    court_id: "d4e5f6a7-0005-4b8c-9d0e-f4a5b6c70005",  // Court 5
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-03-30T09:15:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-29T12:00:00-04:00",
   },
+
+  /* ── 5. Confirmed — David Chen + Jin Park (Wed) ───────────── */
   {
     id: "e5f6a7b8-0005-4c9d-0e1f-a5b6c7d80005",
-    coach_id: "a1b2c3d4-0005-4e5f-8a9b-c1d2e3f40005", // David Chen
-    member_id: "b2c3d4e5-0009-4f6a-9b0c-d2e3f4a50009", // Mia Park (child)
-    start_time: "2026-03-30T10:00:00-04:00",
-    duration_minutes: 30,
+    member_id: "b2c3d4e5-0008-4f6a-9b0c-d2e3f4a50008",   // Jin Park
+    booked_by_id: "b2c3d4e5-0008-4f6a-9b0c-d2e3f4a50008",
+    coach_id: "a1b2c3d4-0005-4e5f-8a9b-c1d2e3f40005",     // David Chen
+    start_time: "2026-04-01T08:30:00-04:00",
+    duration_minutes: 60,
     status: "confirmed",
-    court_id: "d4e5f6a7-0003-4b8c-9d0e-f4a5b6c70003",  // Court 3
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-03-31T10:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-30T07:45:00-04:00",
   },
+
+  /* ── 6. Confirmed — Elena Marchetti + Rafael Castillo (Wed) ── */
   {
     id: "e5f6a7b8-0006-4c9d-0e1f-a5b6c7d80006",
-    coach_id: "a1b2c3d4-0006-4e5f-8a9b-c1d2e3f40006", // Elena Marchetti
-    member_id: "b2c3d4e5-0003-4f6a-9b0c-d2e3f4a50003", // Aisha Diallo
-    start_time: "2026-03-30T11:00:00-04:00",
+    member_id: "b2c3d4e5-0013-4f6a-9b0c-d2e3f4a50013",   // Rafael Castillo
+    booked_by_id: "b2c3d4e5-0013-4f6a-9b0c-d2e3f4a50013",
+    coach_id: "a1b2c3d4-0006-4e5f-8a9b-c1d2e3f40006",     // Elena Marchetti
+    start_time: "2026-04-01T11:00:00-04:00",
     duration_minutes: 60,
     status: "confirmed",
-    court_id: "d4e5f6a7-0016-4b8c-9d0e-f4a5b6c70016",  // Court 16 (pro)
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "tennis_house",
+    confirmation_sent_at: "2026-03-31T11:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-30T09:30:00-04:00",
   },
+
+  /* ── 7. Pending pickup — no coach, Gregory Brennan (Thu) ───── */
   {
     id: "e5f6a7b8-0007-4c9d-0e1f-a5b6c7d80007",
-    coach_id: "a1b2c3d4-0001-4e5f-8a9b-c1d2e3f40001", // Marco Reyes
-    member_id: "b2c3d4e5-0008-4f6a-9b0c-d2e3f4a50008", // Jin Park
-    start_time: "2026-03-30T12:00:00-04:00",
-    duration_minutes: 90,
-    status: "confirmed",
-    court_id: "d4e5f6a7-0017-4b8c-9d0e-f4a5b6c70017",  // Court 17 (pro)
+    member_id: "b2c3d4e5-0016-4f6a-9b0c-d2e3f4a50016",   // Gregory Brennan
+    booked_by_id: "b2c3d4e5-0016-4f6a-9b0c-d2e3f4a50016",
+    coach_id: null,
+    start_time: "2026-04-02T09:00:00-04:00",
+    duration_minutes: 60,
+    status: "pending_pickup",
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: null,
+    confirmed_by_member: null,
+    created_at: "2026-03-31T16:00:00-04:00",
   },
+
+  /* ── 8. Pending pickup — no coach, Catherine Harlow (Fri) ──── */
   {
     id: "e5f6a7b8-0008-4c9d-0e1f-a5b6c7d80008",
-    coach_id: "a1b2c3d4-0003-4e5f-8a9b-c1d2e3f40003", // James Okafor
-    member_id: "b2c3d4e5-0010-4f6a-9b0c-d2e3f4a50010", // Gregory Walsh
-    start_time: "2026-03-30T14:00:00-04:00",
-    duration_minutes: 60,
-    status: "confirmed",
-    court_id: "d4e5f6a7-0006-4b8c-9d0e-f4a5b6c70006",  // Court 6
+    member_id: "b2c3d4e5-0001-4f6a-9b0c-d2e3f4a50001",   // Catherine Harlow
+    booked_by_id: "b2c3d4e5-0001-4f6a-9b0c-d2e3f4a50001",
+    coach_id: null,
+    start_time: "2026-04-03T15:00:00-04:00",
+    duration_minutes: 90,
+    status: "pending_pickup",
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: null,
+    confirmed_by_member: null,
+    created_at: "2026-04-01T12:00:00-04:00",
   },
+
+  /* ── 9. Cancelled — Marco Reyes + Robert Fenwick (Thu) ─────── */
   {
     id: "e5f6a7b8-0009-4c9d-0e1f-a5b6c7d80009",
-    coach_id: "a1b2c3d4-0005-4e5f-8a9b-c1d2e3f40005", // David Chen
-    member_id: "b2c3d4e5-0011-4f6a-9b0c-d2e3f4a50011", // Lucia Ferreira
-    start_time: "2026-03-30T15:30:00-04:00",
+    member_id: "b2c3d4e5-0002-4f6a-9b0c-d2e3f4a50002",   // Robert Fenwick
+    booked_by_id: "b2c3d4e5-0002-4f6a-9b0c-d2e3f4a50002",
+    coach_id: "a1b2c3d4-0001-4e5f-8a9b-c1d2e3f40001",     // Marco Reyes
+    start_time: "2026-04-02T14:00:00-04:00",
     duration_minutes: 60,
-    status: "confirmed",
-    court_id: "d4e5f6a7-0007-4b8c-9d0e-f4a5b6c70007",  // Court 7
+    status: "cancelled",
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-04-01T10:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-31T09:00:00-04:00",
   },
+
+  /* ── 10. Completed — Sandra Volkova + Aisha Diallo (Mon) ───── */
   {
     id: "e5f6a7b8-0010-4c9d-0e1f-a5b6c7d80010",
-    coach_id: "a1b2c3d4-0002-4e5f-8a9b-c1d2e3f40002", // Sandra Volkova
-    member_id: "b2c3d4e5-0012-4f6a-9b0c-d2e3f4a50012", // Omar Hassan
-    start_time: "2026-03-30T17:00:00-04:00",
+    member_id: "b2c3d4e5-0003-4f6a-9b0c-d2e3f4a50003",   // Aisha Diallo
+    booked_by_id: "b2c3d4e5-0003-4f6a-9b0c-d2e3f4a50003",
+    coach_id: "a1b2c3d4-0002-4e5f-8a9b-c1d2e3f40002",     // Sandra Volkova
+    start_time: "2026-03-30T10:00:00-04:00",
+    duration_minutes: 60,
+    status: "completed",
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: null,
+    booked_via: "member_app",
+    confirmation_sent_at: "2026-03-29T14:10:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-03-28T15:00:00-04:00",
+  },
+
+  /* ── 11. Confirmed recurring — Priya Nair + Mia Park (Wed) ── */
+  {
+    id: "e5f6a7b8-0011-4c9d-0e1f-a5b6c7d80011",
+    member_id: "b2c3d4e5-0009-4f6a-9b0c-d2e3f4a50009",   // Mia Park (child)
+    booked_by_id: "b2c3d4e5-0008-4f6a-9b0c-d2e3f4a50008", // Jin Park (parent)
+    coach_id: "a1b2c3d4-0004-4e5f-8a9b-c1d2e3f40004",     // Priya Nair
+    start_time: "2026-04-01T16:00:00-04:00",
+    duration_minutes: 30,
+    status: "confirmed",
+    is_recurring: true,
+    recurrence_id: "d0e1f2a3-0001-4b4c-5d6e-f0a1b2c30001",
+    court_id: null,
+    booked_via: "coach",
+    confirmation_sent_at: "2026-03-31T12:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-02-15T10:00:00-05:00",
+  },
+
+  /* ── 12. Confirmed with court — James Okafor + Jin Park (Fri) ─ */
+  {
+    id: "e5f6a7b8-0012-4c9d-0e1f-a5b6c7d80012",
+    member_id: "b2c3d4e5-0008-4f6a-9b0c-d2e3f4a50008",   // Jin Park
+    booked_by_id: "b2c3d4e5-0008-4f6a-9b0c-d2e3f4a50008",
+    coach_id: "a1b2c3d4-0003-4e5f-8a9b-c1d2e3f40003",     // James Okafor
+    start_time: "2026-04-03T10:00:00-04:00",
     duration_minutes: 90,
     status: "confirmed",
-    court_id: "d4e5f6a7-0018-4b8c-9d0e-f4a5b6c70018",  // Court 18 (pro)
+    is_recurring: false,
+    recurrence_id: null,
+    court_id: "d4e5f6a7-0016-4b8c-9d0e-f4a5b6c70016",     // Court 16 (pro)
+    booked_via: "tennis_house",
+    confirmation_sent_at: "2026-04-02T09:00:00-04:00",
+    confirmed_by_member: true,
+    created_at: "2026-04-01T14:00:00-04:00",
   },
-] as const;
+];
