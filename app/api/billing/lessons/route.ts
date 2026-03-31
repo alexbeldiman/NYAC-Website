@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getStaffUser } from "@/lib/auth";
-import { groupMitlAcademyRows } from "@/lib/billingHelpers";
+import { groupLessonRows } from "@/lib/billingHelpers";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -33,33 +33,40 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Mon–Fri range
-  const weekEndDate = new Date(weekStartDate.getTime() + 4 * 86_400_000);
-  const weekEnd = weekEndDate.toISOString().slice(0, 10);
+  // Mon–Sun: exclusive upper bound is the following Monday
+  const weekEndExclusive = new Date(weekStartDate.getTime() + 7 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
 
   const { data: rows, error } = await supabase
-    .from("mitl_academy_attendance")
+    .from("private_lessons")
     .select(
       `
-      id,
-      date,
-      session:mitl_academy_sessions!mitl_academy_attendance_session_id_fkey(program, start_time),
-      child:profiles!mitl_academy_attendance_child_id_fkey(first_name, last_name, audit_number)
+      start_time,
+      duration_minutes,
+      member:profiles!private_lessons_member_id_fkey(first_name, last_name, audit_number),
+      coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
       `
     )
-    .gte("date", weekStart)
-    .lte("date", weekEnd);
+    .in("status", ["completed", "confirmed"])
+    .gte("start_time", `${weekStart}T00:00:00Z`)
+    .lt("start_time", `${weekEndExclusive}T00:00:00Z`)
+    .order("start_time");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const result = groupMitlAcademyRows(
-    (rows ?? []).map((r) => ({
-      session: r.session as { program: string; start_time: string } | null,
-      child: r.child as { first_name: string; last_name: string; audit_number: string } | null,
-    }))
-  );
+  const typed = (rows ?? []).map((r) => ({
+    start_time: r.start_time,
+    duration_minutes: r.duration_minutes,
+    member: r.member as {
+      first_name: string;
+      last_name: string;
+      audit_number: string;
+    } | null,
+    coach: r.coach as { first_name: string; last_name: string } | null,
+  }));
 
-  return NextResponse.json(result);
+  return NextResponse.json(groupLessonRows(typed));
 }

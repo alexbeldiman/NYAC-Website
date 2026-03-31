@@ -66,3 +66,48 @@ export async function sendMemberDeclineNotification(
     `Member declined lesson at ${lesson.start_time} — notifying coach ${coach.first_name} ${coach.last_name}`
   );
 }
+
+export async function notifyWaitlistPromotion(
+  waitlistEntry: { last_name: string; audit_number: string; slot_id: string }
+): Promise<void> {
+  console.log(
+    `Waitlist promotion: ${waitlistEntry.last_name} (audit: ${waitlistEntry.audit_number}) promoted from waitlist for slot ${waitlistEntry.slot_id}`
+  );
+}
+
+export async function notifyCoachLessonCancelled(
+  lesson: { start_time: string },
+  coach: { first_name: string; last_name: string }
+): Promise<void> {
+  console.log(
+    `Pre-lesson cancellation: lesson at ${lesson.start_time} cancelled — notifying coach ${coach.first_name} ${coach.last_name}`
+  );
+}
+
+export async function notifyCoachCancellationReview(
+  lesson: { start_time: string },
+  coach: { first_name: string; last_name: string }
+): Promise<void> {
+  console.log(
+    `Post-lesson cancellation review: lesson at ${lesson.start_time} cancelled after end time — asking coach ${coach.first_name} ${coach.last_name} to confirm if lesson happened`
+  );
+}
+
+export async function notifyCoachAvailabilityApproved(
+  availability: { unavailable_from: string; unavailable_to: string },
+  coach: { first_name: string; last_name: string }
+): Promise<void> {
+  console.log(
+    `Availability approved: ${coach.first_name} ${coach.last_name} unavailability from ${availability.unavailable_from} to ${availability.unavailable_to} has been approved`
+  );
+}
+
+export async function notifyNewStaffAccount(
+  profile: { first_name: string; last_name: string; role: string | null },
+  email: string,
+  password: string
+): Promise<void> {
+  console.log(
+    `New staff account created: ${profile.first_name} ${profile.last_name} (${profile.role}) — email: ${email}, password: ${password}`
+  );
+}
