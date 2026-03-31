@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { withApiErrorHandling } from "@/lib/api";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
 
   const body = await request.json();
   const {
@@ -108,5 +110,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  return NextResponse.json(signup, { status: 201 });
+    return NextResponse.json(signup, { status: 201 });
+  });
 }

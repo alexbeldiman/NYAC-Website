@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { withApiErrorHandling } from "@/lib/api";
 import { sendMemberDeclineNotification } from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -6,7 +7,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
 
   const body = await request.json();
   const { last_name, audit_number, confirmed } = body;
@@ -72,5 +74,6 @@ export async function POST(
     }
   }
 
-  return NextResponse.json(data);
+    return NextResponse.json(data);
+  });
 }

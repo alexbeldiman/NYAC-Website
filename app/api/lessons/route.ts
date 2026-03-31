@@ -1,5 +1,5 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { getStaffUser } from "@/lib/auth";
+import { requireStaffUser, withApiErrorHandling } from "@/lib/api";
 import {
   sendLessonConfirmationRequest,
   notifyCoachesOfPickup,
@@ -7,48 +7,53 @@ import {
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
+    const { response } = await requireStaffUser(supabase, [
+      "coach",
+      "director",
+      "creator",
+      "tennis_house",
+    ]);
+    if (response) return response;
 
-  const staff = await getStaffUser(supabase);
-  if (!staff) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const { searchParams } = request.nextUrl;
+    const coach_id = searchParams.get("coach_id");
+    const date = searchParams.get("date");
+    const status = searchParams.get("status");
 
-  const { searchParams } = request.nextUrl;
-  const coach_id = searchParams.get("coach_id");
-  const date = searchParams.get("date");
-  const status = searchParams.get("status");
+    let query = supabase
+      .from("private_lessons")
+      .select(
+        `
+        *,
+        member:profiles!private_lessons_member_id_fkey(first_name, last_name, audit_number),
+        coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
+        `
+      )
+      .order("start_time");
 
-  let query = supabase
-    .from("private_lessons")
-    .select(
-      `
-      *,
-      member:profiles!private_lessons_member_id_fkey(first_name, last_name, audit_number),
-      coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
-      `
-    )
-    .order("start_time");
+    if (coach_id) query = query.eq("coach_id", coach_id);
+    if (status) query = query.eq("status", status);
+    if (date) {
+      query = query
+        .gte("start_time", `${date}T00:00:00Z`)
+        .lt("start_time", `${date}T24:00:00Z`);
+    }
 
-  if (coach_id) query = query.eq("coach_id", coach_id);
-  if (status) query = query.eq("status", status);
-  if (date) {
-    query = query
-      .gte("start_time", `${date}T00:00:00Z`)
-      .lt("start_time", `${date}T24:00:00Z`);
-  }
+    const { data, error } = await query;
 
-  const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
+    return NextResponse.json(data);
+  });
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
 
   const body = await request.json();
   const {
@@ -205,5 +210,6 @@ export async function POST(request: NextRequest) {
     await sendLessonConfirmationRequest(lesson, notifMember);
   }
 
-  return NextResponse.json(lesson, { status: 201 });
+    return NextResponse.json(lesson, { status: 201 });
+  });
 }

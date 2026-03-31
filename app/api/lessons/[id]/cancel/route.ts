@@ -1,4 +1,5 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { withApiErrorHandling } from "@/lib/api";
 import {
   notifyCoachLessonCancelled,
   notifyCoachCancellationReview,
@@ -9,7 +10,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
 
   const body = await request.json();
   const { last_name, audit_number } = body;
@@ -108,5 +110,6 @@ export async function POST(
     await notifyCoachCancellationReview(updatedLesson, coach);
   }
 
-  return NextResponse.json({ lesson: updatedLesson, review });
+    return NextResponse.json({ lesson: updatedLesson, review });
+  });
 }

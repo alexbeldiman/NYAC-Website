@@ -1,82 +1,86 @@
 import { createClient } from "@/lib/supabase/server";
-import { getStaffUser } from "@/lib/auth";
+import { requireStaffUser, withApiErrorHandling } from "@/lib/api";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
+    const { response } = await requireStaffUser(supabase, [
+      "tennis_house",
+      "director",
+      "creator",
+    ]);
+    if (response) return response;
 
-  const staff = await getStaffUser(supabase);
-  if (!staff) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const search = request.nextUrl.searchParams.get("search") ?? "";
 
-  const search = request.nextUrl.searchParams.get("search") ?? "";
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .or(`last_name.ilike.%${search}%,audit_number.eq.${search}`)
+      .order("last_name");
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .or(`last_name.ilike.%${search}%,audit_number.eq.${search}`)
-    .order("last_name");
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
+    return NextResponse.json(data);
+  });
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  return withApiErrorHandling(async () => {
+    const supabase = await createClient();
+    const { staff, response } = await requireStaffUser(supabase, [
+      "tennis_house",
+      "director",
+      "creator",
+    ]);
+    if (response || !staff) return response;
 
-  const staff = await getStaffUser(supabase);
-  if (!staff) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const body = await request.json();
+    const {
+      first_name,
+      last_name,
+      audit_number,
+      phone,
+      role,
+      is_child,
+      gender,
+      date_of_birth,
+      parent_id,
+    } = body;
 
-  const body = await request.json();
+    const assignedRole =
+      role !== undefined && (staff.role === "director" || staff.role === "creator")
+        ? role
+        : undefined;
 
-  const {
-    first_name,
-    last_name,
-    audit_number,
-    phone,
-    role,
-    is_child,
-    gender,
-    date_of_birth,
-    parent_id,
-  } = body;
+    const insert: Record<string, unknown> = {
+      first_name,
+      last_name,
+      audit_number,
+      phone: phone ?? null,
+      is_child: is_child ?? false,
+      gender: gender ?? null,
+      date_of_birth: date_of_birth ?? null,
+      parent_id: parent_id ?? null,
+    };
 
-  // Only directors and creators may assign a role
-  const assignedRole =
-    role !== undefined && (staff.role === "director" || staff.role === "creator")
-      ? role
-      : undefined;
+    if (assignedRole !== undefined) {
+      insert.role = assignedRole;
+    }
 
-  const insert: Record<string, unknown> = {
-    first_name,
-    last_name,
-    audit_number,
-    phone: phone ?? null,
-    is_child: is_child ?? false,
-    gender: gender ?? null,
-    date_of_birth: date_of_birth ?? null,
-    parent_id: parent_id ?? null,
-  };
+    const { data, error } = await supabase
+      .from("profiles")
+      .insert(insert)
+      .select()
+      .single();
 
-  if (assignedRole !== undefined) {
-    insert.role = assignedRole;
-  }
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .insert(insert)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(data, { status: 201 });
+  });
 }
