@@ -1,16 +1,83 @@
-# NYAC Website — System Architecture Overview
-
+# NYAC Website — System Architecture Overview (v1.1)
+ 
+## The two separate experiences
+ 
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   PUBLIC SITE                               │
+│                                                             │
+│   Anyone can visit — no login                              │
+│   Club info, programs, contact                             │
+│   Clinic signup (code + last name + audit number)          │
+│   Lesson booking (last name + audit number)                │
+└─────────────────────────────────────────────────────────────┘
+ 
+┌─────────────────────────────────────────────────────────────┐
+│                   STAFF APP                                 │
+│                                                             │
+│   Requires login — email + password                        │
+│   Kevin (director), Coaches, Tennis House employees        │
+│   Schedules, check-ins, rosters, billing exports           │
+└─────────────────────────────────────────────────────────────┘
+```
+ 
+---
+ 
+## Member verification flow (no account needed)
+ 
+```
+CLINIC SIGNUP
+─────────────
+Member visits public site
+        │
+Enters daily court code
+        │
+Enters last name + audit number
+        │
+System checks profiles table:
+WHERE audit_number = [input]
+AND last_name ILIKE [input]      ← case-insensitive, no frustration
+        │
+        ├── Match → signup proceeds, pick slot, add guests
+        │
+        └── No match → "We couldn't find your information.
+                        Please double check your details or
+                        speak to someone at the tennis house."
+ 
+ 
+LESSON BOOKING
+──────────────
+Member visits public site
+        │
+Enters last name + audit number
+        │
+System checks profiles table (same check as above)
+        │
+        ├── Match → shows family members under that audit number
+        │           Member picks who the lesson is for
+        │           Picks coach (or any available)
+        │           Picks time slot
+        │           Enters phone number for SMS confirmation
+        │           Done — no account, no password
+        │
+        └── No match → "Some of your information doesn't match
+                        our records. Please contact the tennis house."
+```
+ 
+---
+ 
 ## How it all connects
-
+ 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        BROWSER                              │
 │                                                             │
-│   Member / Coach / Director / Tennis House / Creator        │
-│   logs in → sees their dashboard → takes actions           │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ HTTP requests
-┌─────────────────────▼───────────────────────────────────────┐
+│   PUBLIC SITE              │    STAFF APP                  │
+│   No login                 │    Login required             │
+│   Members, anyone          │    Kevin, Coaches, TH         │
+└───────────┬────────────────┴──────────┬──────────────────--┘
+            │ HTTP requests             │ HTTP requests
+┌───────────▼───────────────────────────▼────────────────────┐
 │                     NEXT.JS APP                             │
 │                                                             │
 │  ┌──────────────┐        ┌──────────────────────────────┐  │
@@ -18,16 +85,15 @@
 │  │  (Jake)      │        │         (Alex)                │  │
 │  │              │        │                               │  │
 │  │  app/        │──────▶│  app/api/                     │  │
-│  │  (dashboard) │ fetch  │  clinics/    lessons/         │  │
-│  │  /member     │        │  members/    programs/        │  │
-│  │  /coach      │        │  courts/     auth/            │  │
-│  │  /director   │        │                               │  │
-│  │  /tennis-    │        │  middleware.ts                │  │
-│  │   house      │        │  (guards every route)        │  │
+│  │  (public)/   │ fetch  │  clinics/    lessons/         │  │
+│  │  (staff)/    │        │  members/    programs/        │  │
+│  │              │        │  courts/     auth/            │  │
+│  │              │        │                               │  │
+│  │              │        │  middleware.ts                │  │
+│  │              │        │  (staff routes only)         │  │
 │  └──────────────┘        └──────────────┬────────────────┘  │
 │                                         │                   │
 │  lib/supabase/client.ts    lib/supabase/server.ts           │
-│  (Jake uses this)          (Alex uses this)                 │
 └─────────────────────────────────────────┬───────────────────┘
                                           │ SQL queries
 ┌─────────────────────────────────────────▼───────────────────┐
@@ -36,135 +102,105 @@
 │  ┌─────────────────┐    ┌──────────────────────────────┐   │
 │  │   AUTH          │    │       DATABASE               │   │
 │  │                 │    │                              │   │
-│  │  Validates      │    │  profiles                    │   │
-│  │  login          │    │  courts                      │   │
+│  │  Staff only     │    │  profiles                    │   │
+│  │  Email+password │    │  courts                      │   │
 │  │                 │    │  clinic_slots                │   │
-│  │  Issues JWT     │    │  clinic_signups              │   │
-│  │  session token  │    │  private_lessons             │   │
-│  │                 │    │  pickup_requests             │   │
-│  │  Token travels  │    │  recurrences                 │   │
-│  │  with every     │    │  coach_availability          │   │
-│  │  request        │    │  mitl_academy_sessions       │   │
+│  │  Members do NOT │    │  clinic_signups              │   │
+│  │  have auth      │    │  private_lessons             │   │
+│  │  accounts —     │    │  pickup_requests             │   │
+│  │  verified by    │    │  recurrences                 │   │
+│  │  last name +    │    │  coach_availability          │   │
+│  │  audit number   │    │  mitl_academy_sessions       │   │
 │  └─────────────────┘    │  mitl_academy_attendance     │   │
 │                         └──────────────────────────────┘   │
 │                                                             │
-│  Row-Level Security: users can only see/edit their own data │
+│  RLS: staff see everything, public API only returns         │
+│  data after successful last name + audit number check       │
 └─────────────────────────────────────────────────────────────┘
                                           │
                                           │ SMS
 ┌─────────────────────────────────────────▼───────────────────┐
 │                       TWILIO                                │
 │                                                             │
-│  Lesson confirmations                                       │
+│  Lesson confirmations → member's phone                      │
 │  Coach pickup notifications                                 │
 │  Daily clinic code → coaches & director                     │
 │  Director escalation after 2hr pickup timeout              │
 └─────────────────────────────────────────────────────────────┘
 ```
-
+ 
 ---
-
-## Request lifecycle — example: member signs up for a clinic
-
-```
-1. Member opens app in browser
-        │
-2. middleware.ts checks session token
-        │ valid → continue
-        │ invalid → redirect to /login
-        │
-3. app/(dashboard)/member/clinics/page.tsx loads
-   (Jake's file — fetches slot data, shows the UI)
-        │
-4. Member enters daily code, clicks "Sign up"
-        │
-5. fetch('POST /api/clinics/signup')
-        │
-6. app/api/clinics/signup/route.ts runs
-   (Alex's file)
-        ├── verify session (who is this user?)
-        ├── check role = 'member'
-        ├── validate daily code
-        ├── check slot not full
-        └── INSERT into clinic_signups table
-        │
-7. Supabase stores the row
-        │
-8. API returns success
-        │
-9. Jake's UI updates — button shows "Registered"
-```
-
----
-
+ 
 ## Folder ownership
-
+ 
 ```
 NYAC-Website/
 │
 ├── app/
-│   ├── (auth)/
-│   │   └── login/              ← Shared (Jake builds UI, Alex wires auth)
+│   ├── (public)/               ← JAKE (no login required)
+│   │   ├── page.tsx            club home page
+│   │   ├── clinics/            clinic signup
+│   │   └── lessons/            lesson booking
 │   │
-│   ├── (dashboard)/            ← JAKE
-│   │   ├── layout.tsx
-│   │   ├── member/
-│   │   ├── coach/
-│   │   ├── director/
-│   │   └── tennis-house/
+│   ├── (staff)/                ← JAKE (login required)
+│   │   ├── layout.tsx          staff shell + nav
+│   │   ├── director/           Kevin's dashboard
+│   │   ├── coach/              coach dashboard
+│   │   └── tennis-house/       tennis house dashboard
 │   │
 │   └── api/                    ← ALEX
-│       ├── auth/
-│       ├── clinics/
-│       ├── lessons/
-│       ├── members/
-│       ├── programs/
-│       ├── coaches/
-│       └── courts/
+│       ├── auth/               staff login/logout
+│       ├── verify/             last name + audit check (public)
+│       ├── clinics/            signup, checkin, billing
+│       ├── lessons/            booking, pickup, confirmation
+│       ├── members/            profile lookup
+│       ├── programs/           MITL/Academy attendance
+│       ├── coaches/            availability
+│       └── courts/             court management
 │
 ├── lib/
 │   ├── supabase/
-│   │   ├── client.ts           ← JAKE uses this (browser)
-│   │   └── server.ts           ← ALEX uses this (server)
+│   │   ├── client.ts           ← JAKE uses (browser)
+│   │   └── server.ts           ← ALEX uses (server)
 │   ├── sms.ts                  ← ALEX
-│   ├── roles.ts                ← ALEX
+│   ├── roles.ts                ← ALEX (staff roles only)
 │   └── notifications.ts        ← ALEX
 │
-├── middleware.ts                ← ALEX
+├── middleware.ts                ← ALEX (protects /staff routes only)
 │
 └── supabase/
     ├── migrations/             ← ALEX
     └── seed.sql                ← ALEX
 ```
-
+ 
 ---
-
-## How auth works
-
+ 
+## How staff auth works
+ 
 ```
-User enters email + password
+Staff member enters email + password
         │
 Supabase Auth validates it
         │
-Issues a session token (JWT)
+Issues session token (JWT)
         │
 Token stored in browser cookie
         │
-Every request → middleware.ts reads cookie
+Every /staff request → middleware.ts reads cookie
         │
-        ├── No token → redirect to /login
+        ├── No token → redirect to /staff/login
         │
         └── Valid token → look up profiles table
                 │
-                └── Get role (member/coach/director/etc.)
+                └── Get role (coach/director/tennis_house/creator)
                         │
                         └── Show the right dashboard
 ```
-
+ 
 ---
-
-## The 5 user roles and what they see
-
+ 
+## The 5 user roles
+ 
 ```
 ┌─────────────────┬────────────────────────────────────────────┐
 │ Role            │ What they can do                           │
@@ -178,36 +214,62 @@ Every request → middleware.ts reads cookie
 │ coach           │ Personal schedule, clinic management,      │
 │                 │ MITL/Academy check-in, pickup requests     │
 ├─────────────────┼────────────────────────────────────────────┤
-│ member          │ Book lessons, clinic signup, family mgmt   │
-├─────────────────┼────────────────────────────────────────────┤
 │ tennis_house    │ Book on behalf of members, court mgmt      │
+├─────────────────┼────────────────────────────────────────────┤
+│ member          │ No account. Verified by last name +        │
+│                 │ audit number on each visit.                │
 └─────────────────┴────────────────────────────────────────────┘
 ```
-
+ 
 ---
-
-## The database tables and what they store
-
+ 
+## Updated database tables
+ 
 ```
-profiles              → Every person (adults + kids), their role, audit number
-courts                → All 18 courts, which are pro courts, current status
-clinic_slots          → Each Sat/Sun clinic hour, capacity, daily access code
-clinic_signups        → Who signed up for which slot, guests, check-in status
-private_lessons       → Every lesson booking, coach, time, status
-pickup_requests       → Open "any coach" bookings waiting to be claimed
-recurrences           → Standing weekly lesson series
-coach_availability    → Coach unavailability requests + approval status
-mitl_academy_sessions → The fixed Mon-Fri program time slots
-mitl_academy_attendance → Daily check-in records for kids (billing source)
+profiles
+  id            uuid
+  audit_number  text        ← family-wide membership ID
+  first_name    text
+  last_name     text        ← used for member verification
+  phone         text        ← for SMS (parent's number for kids)
+  role          text        ← staff only: director/coach/tennis_house/creator
+                              null for regular members
+  is_child      boolean
+  date_of_birth date
+  gender        text
+  parent_id     uuid        ← links child to parent profile
+  created_at    timestamptz
+ 
+courts                      → all 18 courts, status, pro court flag
+clinic_slots                → Sat/Sun clinic hours, capacity, daily code
+clinic_signups              → who signed up, guests, check-in status
+private_lessons             → every lesson booking, coach, time, status
+pickup_requests             → open "any coach" bookings
+recurrences                 → standing weekly lesson series
+coach_availability          → unavailability requests + approval
+mitl_academy_sessions       → fixed Mon-Fri program time slots
+mitl_academy_attendance     → daily kid check-ins (billing source)
 ```
-
+ 
 ---
-
+ 
+## Key change from v1.0
+ 
+| v1.0 | v1.1 |
+|---|---|
+| Members had Supabase Auth accounts | Members have no accounts |
+| Members logged in with email/password | Members verify with last name + audit number |
+| middleware protected member routes | middleware only protects /staff routes |
+| full_name column | split into first_name + last_name |
+| One app | Two experiences: public site + staff app |
+ 
+---
+ 
 ## External services
-
+ 
 ```
-Vercel      → Hosts the Next.js app, auto-deploys from GitHub main branch
-Supabase    → Database + auth, hosted PostgreSQL, free tier
-Twilio      → Sends SMS notifications (lessons, codes, pickup alerts)
+Vercel      → Hosts the Next.js app, auto-deploys from GitHub main
+Supabase    → Database + auth (staff only), hosted PostgreSQL
+Twilio      → SMS notifications
 GitHub      → Source control, shared between Alex and Jake
 ```
