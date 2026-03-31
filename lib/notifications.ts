@@ -1,12 +1,75 @@
-// TODO: replace with real email/SMS provider before launch
+function logDraftEmail(input: {
+  template: string;
+  to: string;
+  subject: string;
+  bodyLines: string[];
+}) {
+  const body = input.bodyLines.join("\n");
+  console.log(
+    [
+      "[Draft Email]",
+      `Template: ${input.template}`,
+      `To: ${input.to}`,
+      `Subject: ${input.subject}`,
+      "Body:",
+      body,
+    ].join("\n")
+  );
+}
+
+export async function notifyPrivateLessonCreated(input: {
+  lesson: { id: string; start_time: string; duration_minutes: number; status: string };
+  member: { first_name: string; last_name: string };
+  booked_via: string;
+}): Promise<void> {
+  logDraftEmail({
+    template: "private_lesson_created",
+    to: `${input.member.first_name} ${input.member.last_name} (member)`,
+    subject: `Lesson created for ${input.lesson.start_time}`,
+    bodyLines: [
+      `Hello ${input.member.first_name},`,
+      "Your private lesson has been created.",
+      `Lesson ID: ${input.lesson.id}`,
+      `Start: ${input.lesson.start_time}`,
+      `Duration: ${input.lesson.duration_minutes} minutes`,
+      `Status: ${input.lesson.status}`,
+      `Booked via: ${input.booked_via}`,
+    ],
+  });
+}
+
+export async function notifyClinicSignupCreated(input: {
+  signup: { id: string; slot_id: string; guest_count: number };
+  member: { first_name: string; last_name: string; audit_number: string };
+}): Promise<void> {
+  logDraftEmail({
+    template: "clinic_signup_created",
+    to: `${input.member.first_name} ${input.member.last_name} (member)`,
+    subject: `Clinic signup confirmed for slot ${input.signup.slot_id}`,
+    bodyLines: [
+      `Hello ${input.member.first_name},`,
+      "Your clinic signup has been created.",
+      `Signup ID: ${input.signup.id}`,
+      `Slot ID: ${input.signup.slot_id}`,
+      `Guest count: ${input.signup.guest_count}`,
+      `Audit number: ${input.member.audit_number}`,
+    ],
+  });
+}
 
 export async function sendLessonConfirmationRequest(
   lesson: { start_time: string },
   member: { first_name: string; last_name: string }
 ): Promise<void> {
-  console.log(
-    `Confirmation request for ${member.first_name} ${member.last_name} lesson at ${lesson.start_time}`
-  );
+  logDraftEmail({
+    template: "lesson_confirmation_request",
+    to: `${member.first_name} ${member.last_name} (member)`,
+    subject: `Please confirm lesson at ${lesson.start_time}`,
+    bodyLines: [
+      `Hello ${member.first_name},`,
+      `Please confirm your lesson at ${lesson.start_time}.`,
+    ],
+  });
 }
 
 export async function notifyCoachesOfPickup(
@@ -14,9 +77,16 @@ export async function notifyCoachesOfPickup(
   coaches: { first_name: string; last_name: string }[],
   member: { first_name: string; last_name: string }
 ): Promise<void> {
-  console.log(
-    `Pickup available: ${member.first_name} ${member.last_name} needs a coach at ${lesson.start_time} — notifying ${coaches.length} coach(es)`
-  );
+  logDraftEmail({
+    template: "pickup_coach_broadcast",
+    to: `${coaches.length} coach(es)`,
+    subject: `Pickup available at ${lesson.start_time}`,
+    bodyLines: [
+      `Member: ${member.first_name} ${member.last_name}`,
+      `Lesson time: ${lesson.start_time}`,
+      "A coach can claim this pickup request.",
+    ],
+  });
 }
 
 export async function sendCoachPickupConfirmation(

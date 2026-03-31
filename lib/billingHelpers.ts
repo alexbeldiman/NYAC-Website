@@ -79,7 +79,7 @@ export function groupClinicRows(rows: ClinicRawRow[]): ClinicGroup[] {
 
 export interface LessonEntry {
   coach_name: string;
-  date: string;
+  start_time: string;
   duration_minutes: number;
 }
 
@@ -128,7 +128,7 @@ export function groupLessonRows(rows: LessonRawRow[]): LessonGroup[] {
 
     memberMap.get(memberName)!.lessons.push({
       coach_name: coachName,
-      date: row.start_time.slice(0, 10),
+      start_time: row.start_time,
       duration_minutes: row.duration_minutes,
     });
     tot.total_lessons++;

@@ -1,5 +1,6 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getStaffUser } from "@/lib/auth";
+import { notifyPrivateLessonCreated } from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 const DAY_MAP: Record<string, number> = {
@@ -99,6 +100,11 @@ export async function POST(request: NextRequest) {
   }
 
   const serviceClient = createServiceClient();
+  const { data: memberProfile } = await serviceClient
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", member_id)
+    .single();
 
   const { data: recurrence, error: recurrenceError } = await serviceClient
     .from("recurrences")
@@ -175,6 +181,16 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!lessonError && lesson) {
+      await notifyPrivateLessonCreated({
+        lesson: {
+          id: lesson.id,
+          start_time: lesson.start_time,
+          duration_minutes: lesson.duration_minutes,
+          status: lesson.status,
+        },
+        member: memberProfile ?? { first_name: "", last_name: "" },
+        booked_via: lesson.booked_via,
+      });
       lessons.push(lesson);
     }
   }

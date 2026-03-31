@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { withApiErrorHandling } from "@/lib/api";
+import { notifyClinicSignupCreated } from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
   // 1. Verify the member exists
   const { data: members, error: memberError } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, first_name, last_name, audit_number")
     .ilike("last_name", last_name)
     .eq("audit_number", audit_number)
     .eq("is_child", false);
@@ -36,11 +37,8 @@ export async function POST(request: NextRequest) {
 
   if (!members || members.length === 0) {
     return NextResponse.json(
-      {
-        error:
-          "We couldn't find your information. Please check your details or speak to someone at the tennis house.",
-      },
-      { status: 404 }
+      { error: "Unauthorized" },
+      { status: 401 }
     );
   }
 
@@ -109,6 +107,19 @@ export async function POST(request: NextRequest) {
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
+
+  await notifyClinicSignupCreated({
+    signup: {
+      id: signup.id,
+      slot_id: signup.slot_id,
+      guest_count: signup.guest_count,
+    },
+    member: {
+      first_name: member.first_name,
+      last_name: member.last_name,
+      audit_number: member.audit_number,
+    },
+  });
 
     return NextResponse.json(signup, { status: 201 });
   });

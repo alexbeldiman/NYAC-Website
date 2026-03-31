@@ -29,11 +29,8 @@ export async function GET(request: NextRequest) {
 
     if (!family || family.length === 0) {
       return NextResponse.json(
-        {
-          error:
-            "We couldn't find your information. Please check your details or speak to someone at the tennis house.",
-        },
-        { status: 404 }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
@@ -42,8 +39,17 @@ export async function GET(request: NextRequest) {
       .from("private_lessons")
       .select(
         `
-        *,
-        member:profiles!private_lessons_member_id_fkey(first_name, last_name),
+        id,
+        member_id,
+        coach_id,
+        start_time,
+        duration_minutes,
+        status,
+        is_recurring,
+        booked_via,
+        confirmation_sent_at,
+        confirmed_by_member,
+        member:profiles!private_lessons_member_id_fkey(first_name, last_name, audit_number),
         coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
         `
       )

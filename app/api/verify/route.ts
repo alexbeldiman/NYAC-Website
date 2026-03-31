@@ -2,8 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { withApiErrorHandling } from "@/lib/api";
 import { NextResponse, type NextRequest } from "next/server";
 
-const NOT_FOUND_MESSAGE =
-  "We couldn't find your information. Please check your details or speak to someone at the tennis house.";
+const UNAUTHORIZED_MESSAGE = "Unauthorized";
 
 export async function POST(request: NextRequest) {
   return withApiErrorHandling(async () => {
@@ -20,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     const { data: adults, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, first_name, last_name, audit_number, is_child")
       .ilike("last_name", last_name)
       .eq("audit_number", audit_number)
       .eq("is_child", false);
@@ -30,12 +29,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!adults || adults.length === 0) {
-      return NextResponse.json({ error: NOT_FOUND_MESSAGE }, { status: 404 });
+      return NextResponse.json({ error: UNAUTHORIZED_MESSAGE }, { status: 401 });
     }
 
     const { data: children, error: childError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, first_name, last_name, audit_number, parent_id, is_child")
       .eq("audit_number", audit_number)
       .eq("is_child", true)
       .order("last_name");

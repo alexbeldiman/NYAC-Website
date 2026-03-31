@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { requireStaffUser, withApiErrorHandling } from "@/lib/api";
 import {
+  notifyPrivateLessonCreated,
   sendLessonConfirmationRequest,
   notifyCoachesOfPickup,
 } from "@/lib/notifications";
@@ -85,8 +86,8 @@ export async function POST(request: NextRequest) {
 
   if (!family || family.length === 0) {
     return NextResponse.json(
-      { error: "We couldn't find your information. Please check your details or speak to someone at the tennis house." },
-      { status: 404 }
+      { error: "Unauthorized" },
+      { status: 401 }
     );
   }
 
@@ -192,6 +193,17 @@ export async function POST(request: NextRequest) {
     .single();
 
   const notifMember = memberProfile ?? { first_name: "", last_name: "" };
+
+  await notifyPrivateLessonCreated({
+    lesson: {
+      id: lesson.id,
+      start_time: lesson.start_time,
+      duration_minutes: lesson.duration_minutes,
+      status: lesson.status,
+    },
+    member: notifMember,
+    booked_via: lesson.booked_via,
+  });
 
   // 7. If pending_pickup, insert pickup_request and notify coaches
   if (status === "pending_pickup") {

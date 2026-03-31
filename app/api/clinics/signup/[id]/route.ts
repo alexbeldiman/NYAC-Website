@@ -1,6 +1,9 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getStaffUser } from "@/lib/auth";
-import { notifyWaitlistPromotion } from "@/lib/notifications";
+import {
+  notifyClinicSignupCreated,
+  notifyWaitlistPromotion,
+} from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 async function cancelSignup(
@@ -62,13 +65,34 @@ async function cancelSignup(
 
     if (memberId) {
       // Insert a new signup for the promoted waitlister
-      await serviceClient.from("clinic_signups").insert({
-        slot_id: slotId,
-        member_id: memberId,
-        guest_count: entry.guest_count ?? 0,
-        guest_names: entry.guest_names ?? [],
-        added_by: memberId,
-      });
+      const { data: promotedSignup } = await serviceClient
+        .from("clinic_signups")
+        .insert({
+          slot_id: slotId,
+          member_id: memberId,
+          guest_count: entry.guest_count ?? 0,
+          guest_names: entry.guest_names ?? [],
+          added_by: memberId,
+        })
+        .select("id, slot_id, guest_count")
+        .single();
+
+      if (promotedSignup) {
+        const { data: promotedMember } = await serviceClient
+          .from("profiles")
+          .select("first_name, last_name, audit_number")
+          .eq("id", memberId)
+          .single();
+
+        await notifyClinicSignupCreated({
+          signup: promotedSignup,
+          member: promotedMember ?? {
+            first_name: "",
+            last_name: entry.last_name,
+            audit_number: entry.audit_number,
+          },
+        });
+      }
 
       // Remove from waitlist
       await serviceClient

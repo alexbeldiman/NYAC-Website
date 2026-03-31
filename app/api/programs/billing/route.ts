@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getStaffUser } from "@/lib/auth";
-import { groupMitlAcademyRows } from "@/lib/billingHelpers";
+import { extractFamilyNames, groupMitlAcademyRows } from "@/lib/billingHelpers";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -54,12 +54,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const result = groupMitlAcademyRows(
-    (rows ?? []).map((r) => ({
+  const typedRows = (rows ?? []).map((r) => ({
       session: r.session as { program: string; start_time: string } | null,
-      child: r.child as { first_name: string; last_name: string; audit_number: string } | null,
-    }))
-  );
+      child: r.child as {
+        first_name: string;
+        last_name: string;
+        audit_number: string;
+      } | null,
+    }));
+
+  const grouped = groupMitlAcademyRows(typedRows);
+  const familyNames = extractFamilyNames(typedRows);
+  const result = grouped.map((group) => ({
+    ...group,
+    family_name: familyNames.get(group.audit_number) ?? "",
+  }));
 
   return NextResponse.json(result);
 }

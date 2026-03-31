@@ -36,11 +36,8 @@ export async function POST(request: NextRequest) {
 
   if (!members || members.length === 0) {
     return NextResponse.json(
-      {
-        error:
-          "We couldn't find your information. Please check your details or speak to someone at the tennis house.",
-      },
-      { status: 404 }
+      { error: "Unauthorized" },
+      { status: 401 }
     );
   }
 

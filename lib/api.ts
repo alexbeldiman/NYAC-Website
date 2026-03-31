@@ -58,8 +58,8 @@ export async function verifyMemberByAudit(
     return {
       profiles: null,
       response: errorResponse(
-        "We couldn't find your information. Please check your details or speak to someone at the tennis house.",
-        404
+        "Unauthorized",
+        401
       ),
     };
   }

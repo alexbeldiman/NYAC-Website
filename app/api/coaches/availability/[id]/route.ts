@@ -28,10 +28,15 @@ export async function PATCH(
   }
 
   const serviceClient = createServiceClient();
+  const decisionTimestamp = new Date().toISOString();
 
   const { data: updated, error } = await serviceClient
     .from("coach_availability")
-    .update({ status })
+    .update({
+      status,
+      approved_by: staff.id,
+      approved_at: decisionTimestamp,
+    })
     .eq("id", params.id)
     .select(
       "*, coach:profiles!coach_availability_coach_id_fkey(first_name, last_name)"
