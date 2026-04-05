@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
 
     const { data: adults, error } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name, audit_number, is_child")
+      .select(
+        "id, first_name, last_name, audit_number, is_child, date_of_birth, gender"
+      )
       .ilike("last_name", last_name)
       .eq("audit_number", audit_number)
       .eq("is_child", false);
@@ -34,7 +36,9 @@ export async function POST(request: NextRequest) {
 
     const { data: children, error: childError } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name, audit_number, parent_id, is_child")
+      .select(
+        "id, first_name, last_name, audit_number, parent_id, is_child, date_of_birth, gender"
+      )
       .eq("audit_number", audit_number)
       .eq("is_child", true)
       .order("last_name");

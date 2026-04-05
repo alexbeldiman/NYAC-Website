@@ -1,17 +1,18 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { withApiErrorHandling } from "@/lib/api";
 import { notifyClinicSignupCreated } from "@/lib/notifications";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
   return withApiErrorHandling(async () => {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
   const body = await request.json();
   const {
     slot_id,
     last_name,
     audit_number,
+    member_id,
     guest_count = 0,
     guest_names = [],
   } = body;
@@ -24,12 +25,18 @@ export async function POST(request: NextRequest) {
   }
 
   // 1. Verify the member exists
-  const { data: members, error: memberError } = await supabase
+  let query = supabase
     .from("profiles")
-    .select("id, first_name, last_name, audit_number")
+    .select("id, first_name, last_name, audit_number, gender")
     .ilike("last_name", last_name)
     .eq("audit_number", audit_number)
     .eq("is_child", false);
+
+  if (member_id) {
+    query = query.eq("id", member_id);
+  }
+
+  const { data: members, error: memberError } = await query;
 
   if (memberError) {
     return NextResponse.json({ error: memberError.message }, { status: 500 });
@@ -44,15 +51,29 @@ export async function POST(request: NextRequest) {
 
   const member = members[0];
 
-  // 2. Fetch slot and check capacity
+  // 2. Fetch slot and check capacity + gender restriction
   const { data: slot, error: slotError } = await supabase
     .from("clinic_slots")
-    .select("id, capacity")
+    .select("id, capacity, gender_restriction")
     .eq("id", slot_id)
     .single();
 
   if (slotError || !slot) {
     return NextResponse.json({ error: "Slot not found" }, { status: 404 });
+  }
+
+  // Check gender restriction
+  if (slot.gender_restriction === "men_only" && member.gender !== "male") {
+    return NextResponse.json(
+      { error: "This session is for men only." },
+      { status: 403 }
+    );
+  }
+  if (slot.gender_restriction === "women_only" && member.gender !== "female") {
+    return NextResponse.json(
+      { error: "This session is for women only." },
+      { status: 403 }
+    );
   }
 
   const { data: existingSignups, error: countError } = await supabase
@@ -82,6 +103,7 @@ export async function POST(request: NextRequest) {
     .select("id")
     .eq("slot_id", slot_id)
     .eq("member_id", member.id)
+    .eq("is_cancelled", false)
     .maybeSingle();
 
   if (duplicate) {
@@ -91,16 +113,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4. Insert signup
+  // 4. Upsert signup — handles re-signup after cancellation
   const { data: signup, error: insertError } = await supabase
     .from("clinic_signups")
-    .insert({
-      slot_id,
-      member_id: member.id,
-      guest_count,
-      guest_names,
-      added_by: member.id,
-    })
+    .upsert(
+      {
+        slot_id,
+        member_id: member.id,
+        guest_count,
+        guest_names,
+        added_by: member.id,
+        is_cancelled: false,
+        cancelled_at: null,
+        late_cancel: false,
+      },
+      { onConflict: "slot_id,member_id" }
+    )
     .select()
     .single();
 

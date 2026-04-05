@@ -25,9 +25,10 @@ export async function GET(
     const { data: signups, error } = await supabase
       .from("clinic_signups")
       .select(
-        "id, signed_up_at, profiles!clinic_signups_member_id_fkey(first_name, last_name)"
+        "id, member_id, signed_up_at, profiles!clinic_signups_member_id_fkey(first_name, last_name)"
       )
       .eq("slot_id", params.id)
+      .eq("is_cancelled", false)
       .order("signed_up_at", { ascending: true });
 
     if (error) {
@@ -43,6 +44,7 @@ export async function GET(
       const lastInitial = profile?.last_name ? profile.last_name.charAt(0) + "." : "";
       return {
         id: s.id,
+        member_id: s.member_id,
         display_name: `${firstName} ${lastInitial}`.trim(),
         signed_up_at: s.signed_up_at,
       };

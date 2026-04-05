@@ -135,7 +135,7 @@ export async function DELETE(
   const { data: signup, error: fetchError } = await supabase
     .from("clinic_signups")
     .select(
-      "id, slot_id, member_id, profiles!clinic_signups_member_id_fkey(audit_number, last_name), clinic_slots!inner(start_time)"
+      "id, slot_id, member_id, profiles!clinic_signups_member_id_fkey(audit_number, last_name), clinic_slots(date, hour)"
     )
     .eq("id", params.id)
     .single();
@@ -144,8 +144,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Signup not found" }, { status: 404 });
   }
 
-  const slotData = signup.clinic_slots as unknown as { start_time: string } | null;
-  const slotStartTime = slotData?.start_time ?? null;
+  const slotData = signup.clinic_slots as unknown as { date: string; hour: number } | null;
+  // Build an ISO timestamp from date + hour for late-cancel calculation (Eastern time)
+  const slotStartTime = slotData
+    ? `${slotData.date}T${String(slotData.hour).padStart(2, "0")}:00:00-04:00`
+    : null;
 
   // Check if staff
   const staff = await getStaffUser(supabase);

@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     slot_id,
     last_name,
     audit_number,
+    member_id,
     guest_count = 0,
     guest_names = [],
   } = body;
@@ -23,12 +24,18 @@ export async function POST(request: NextRequest) {
   }
 
   // 1. Verify the member exists
-  const { data: members, error: memberError } = await supabase
+  let query = supabase
     .from("profiles")
     .select("id")
     .ilike("last_name", last_name)
     .eq("audit_number", audit_number)
     .eq("is_child", false);
+
+  if (member_id) {
+    query = query.eq("id", member_id);
+  }
+
+  const { data: members, error: memberError } = await query;
 
   if (memberError) {
     return NextResponse.json({ error: memberError.message }, { status: 500 });

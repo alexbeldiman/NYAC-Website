@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const { data: slots, error } = await supabase
     .from("clinic_slots")
-    .select("*, clinic_signups(id, guest_count)")
+    .select("*, clinic_signups(id, guest_count, is_cancelled)")
     .eq("date", date)
     .order("hour");
 
@@ -24,12 +24,11 @@ export async function GET(request: NextRequest) {
   }
 
   const result = (slots ?? []).map((slot) => {
-    const signups: { id: string; guest_count: number }[] =
+    const signups: { id: string; guest_count: number; is_cancelled: boolean }[] =
       slot.clinic_signups ?? [];
-    const signed_up_count = signups.reduce(
-      (sum, s) => sum + 1 + s.guest_count,
-      0
-    );
+    const signed_up_count = signups
+      .filter((s) => !s.is_cancelled)
+      .reduce((sum, s) => sum + 1 + s.guest_count, 0);
     const { clinic_signups: _, ...rest } = slot;
     return {
       ...rest,

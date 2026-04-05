@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekend Clinics — NYAC Travers Island</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:wght@400;600&family=Montserrat:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --crimson:    #C8102E;
+      --crimson-dk: #A00D23;
+      --white:      #FFFFFF;
+      --off-white:  #FAF8F5;
+      --dark:       #1A1A1A;
+      --mid-gray:   #6B6B6B;
+      --light-gray: #E8E4DF;
+      --charcoal:   #2C2C2C;
+
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-label:   'Cormorant Garamond', Georgia, serif;
+      --font-ui:      'Montserrat', Arial, sans-serif;
+      --font-body:    'Lora', Georgia, serif;
+
+      --nav-height:  72px;
+      --vbar-height: 60px;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: var(--dark); background: var(--white); overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+    input, select { font-family: var(--font-ui); }
+    [hidden] { display: none !important; }
+
+    /* ─── Reusable Classes ──────────────────────────────────────── */
+    .btn-crimson {
+      background-color: var(--crimson);
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 11px 28px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: background-color 0.25s ease;
+      white-space: nowrap;
+    }
+    .btn-crimson:hover { background-color: var(--crimson-dk); }
+    .btn-crimson:focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+    .btn-crimson:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.6);
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 27px;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.25s ease;
+      white-space: nowrap;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+    .btn-ghost:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--crimson);
+      color: var(--crimson);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 27px;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      white-space: nowrap;
+    }
+    .btn-outline:hover { background-color: var(--crimson); color: var(--white); }
+    .btn-outline:focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+    .btn-outline:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-muted {
+      background: var(--light-gray);
+      color: var(--mid-gray);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 27px;
+      display: inline-flex;
+      align-items: center;
+      cursor: default;
+    }
+
+    .section-label {
+      font-family: var(--font-label);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      display: block;
+    }
+
+    .divider-crimson {
+      border: none;
+      border-top: 1px solid var(--crimson);
+      width: 48px;
+      margin: 12px 0 22px 0;
+    }
+    .divider-crimson.centered {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ─── Fade-up on Scroll ─────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── NAV ───────────────────────────────────────────────────── */
+    #main-nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      z-index: 100;
+      background: var(--white);
+      border-bottom: 1px solid var(--light-gray);
+      transition: box-shadow 0.25s ease;
+    }
+    #main-nav.nav-scrolled { box-shadow: 0 2px 16px rgba(0,0,0,0.09); }
+
+    .nav-row-1 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 40px;
+      gap: 40px;
+    }
+    .nav-link-group {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+    .nav-link-group a {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--dark);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 0;
+      transition: color 0.25s ease;
+    }
+    .nav-link-group a:hover { color: var(--crimson); }
+    .nav-link-group a.active {
+      color: var(--crimson);
+      border-bottom: 2px solid var(--crimson);
+    }
+    .nav-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .nav-logo {
+      height: 44px;
+      width: auto;
+      object-fit: contain;
+    }
+    .nav-logo-text {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -0.01em;
+    }
+
+    #hamburger-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+    }
+    #hamburger-btn span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--dark);
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    #mobile-nav {
+      display: none;
+      background: var(--white);
+      border-top: 1px solid var(--light-gray);
+    }
+    #mobile-nav a {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--dark);
+      padding: 0 24px;
+      height: 48px;
+      line-height: 48px;
+      border-bottom: 1px solid var(--light-gray);
+      transition: color 0.25s ease;
+    }
+    #mobile-nav a:hover { color: var(--crimson); }
+
+    /* ─── HERO ──────────────────────────────────────────────────── */
+    #hero-section {
+      background-image: url('NYAC.Website.Photos/Arial.View.Courts.png');
+      background-size: cover;
+      background-position: center 40%;
+      position: relative;
+      height: 320px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      margin-top: var(--nav-height);
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      z-index: 0;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      padding: 0 48px 44px;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      opacity: 0.85;
+    }
+    .hero-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.7);
+      width: 48px;
+      margin: 12px 0 14px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 52px;
+      font-weight: 400;
+      color: white;
+      line-height: 1.1;
+    }
+    .hero-subtitle {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 18px;
+      color: white;
+      opacity: 0.80;
+      margin-top: 10px;
+    }
+
+    /* ─── LOCKED STATE ──────────────────────────────────────────── */
+    #locked-state {
+      margin-top: var(--nav-height);
+      min-height: calc(100vh - var(--nav-height) - 200px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      background: var(--off-white);
+    }
+    .locked-card {
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      padding: 56px 48px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .locked-icon {
+      font-size: 28px;
+      margin-bottom: 24px;
+      display: block;
+    }
+    .locked-eyebrow {
+      font-family: var(--font-label);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .locked-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--dark);
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .locked-body {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--mid-gray);
+      margin-bottom: 28px;
+    }
+    .locked-next {
+      display: inline-block;
+      padding: 14px 24px;
+      background: var(--off-white);
+      border: 1px solid var(--light-gray);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--dark);
+      letter-spacing: 0.06em;
+    }
+    .locked-next strong { color: var(--crimson); }
+
+    /* ─── VERIFICATION BAR ──────────────────────────────────────── */
+    #verify-bar {
+      position: sticky;
+      top: var(--nav-height);
+      z-index: 90;
+      background: var(--white);
+      border-bottom: 1px solid var(--light-gray);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .verify-bar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      height: var(--vbar-height);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .verify-label {
+      font-family: var(--font-label);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      white-space: nowrap;
+    }
+    .vbar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--light-gray);
+      flex-shrink: 0;
+    }
+    .verify-input {
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--light-gray);
+      background: var(--off-white);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--dark);
+      outline: none;
+      transition: border-color 0.25s ease;
+    }
+    .verify-input:focus { border-color: var(--crimson); }
+    .verify-input::placeholder { color: var(--mid-gray); }
+    #input-last-name { width: 160px; }
+    #input-audit     { width: 130px; }
+    #input-code      { width: 140px; letter-spacing: 0.08em; }
+    .verify-error {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      color: var(--crimson);
+      white-space: nowrap;
+    }
+    .verify-greeting {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--dark);
+    }
+    .verify-status {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      color: #2D6A4F;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .verify-status-check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: #D8F3DC;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ─── MAIN CONTENT ──────────────────────────────────────────── */
+    .main-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 56px 40px 80px;
+    }
+
+    .slots-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+
+    .day-header {
+      margin-bottom: 24px;
+    }
+    .day-label {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+    .day-date-text {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── SLOT CARDS ────────────────────────────────────────────── */
+    .slot-wrapper { margin-bottom: 20px; }
+
+    .slot-card {
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      padding: 24px 28px;
+      transition: box-shadow 0.25s ease;
+    }
+    .slot-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--dark);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .card-time {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .card-badge {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+    .badge-mens   { background: var(--charcoal); color: var(--white); }
+    .badge-womens { background: var(--crimson);  color: var(--white); }
+    .badge-mixed  { background: var(--light-gray); color: var(--dark); }
+
+    .card-spots {
+      margin-bottom: 14px;
+    }
+    .spots-text {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .spots-text.spots-low  { color: #B45309; }
+    .spots-text.spots-full { color: var(--crimson); }
+    .spots-text.not-scheduled { font-style: italic; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+    .card-attendees { margin-bottom: 16px; }
+    .attendee-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .attendee-item {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .attendee-name { flex: 1; }
+    .cancel-link {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: color 0.25s ease;
+    }
+    .cancel-link:hover { color: var(--crimson); }
+    .attendee-waitlist {
+      font-family: var(--font-label);
+      font-size: 13px;
+      color: var(--mid-gray);
+      font-style: italic;
+    }
+
+    .card-actions { display: flex; align-items: center; gap: 10px; }
+
+    .card-error {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-left: 3px solid var(--crimson);
+      background: #FEF2F2;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--crimson);
+      letter-spacing: 0.02em;
+    }
+    .card-warn {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-left: 3px solid #92400E;
+      background: #FFFBEB;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: #92400E;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── SKELETON SHIMMER ──────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg,
+        var(--light-gray) 25%,
+        #F0EDE8 50%,
+        var(--light-gray) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skel-name  { height: 20px; width: 140px; margin-bottom: 8px; }
+    .skel-time  { height: 12px; width: 70px;  margin-bottom: 16px; }
+    .skel-spots { height: 12px; width: 110px; margin-bottom: 14px; }
+    .skel-btn   { height: 38px; width: 100px; }
+
+    /* ─── INLINE FORMS ──────────────────────────────────────────── */
+    .inline-form {
+      background: var(--off-white);
+      border: 1px solid var(--light-gray);
+      border-top: none;
+      padding: 24px 28px;
+      animation: slideDown 0.2s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .form-heading {
+      font-family: var(--font-label);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      margin-bottom: 18px;
+      display: block;
+    }
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .form-label {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      min-width: 80px;
+    }
+    .form-select {
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--dark);
+      outline: none;
+      transition: border-color 0.25s ease;
+    }
+    .form-select:focus { border-color: var(--crimson); }
+    .form-text-input {
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: var(--dark);
+      outline: none;
+      flex: 1;
+      transition: border-color 0.25s ease;
+    }
+    .form-text-input:focus { border-color: var(--crimson); }
+    .form-text-input::placeholder { color: var(--mid-gray); }
+    .guest-inputs { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+    .form-actions { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+    .form-error {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-left: 3px solid var(--crimson);
+      background: #FEF2F2;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: var(--crimson);
+    }
+    .btn-cancel-form {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      transition: color 0.25s ease;
+    }
+    .btn-cancel-form:hover { color: var(--dark); }
+
+    /* ─── INFO STRIP ────────────────────────────────────────────── */
+    #info-strip {
+      background: linear-gradient(to right, var(--charcoal) 0%, var(--crimson) 50%, var(--charcoal) 100%);
+      display: flex;
+    }
+    .info-tile {
+      flex: 1;
+      padding: 36px 36px;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    .info-tile:last-child { border-right: none; }
+    .info-tile-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .info-tile-value {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--white);
+      line-height: 1.65;
+    }
+
+    /* ─── FOOTER ────────────────────────────────────────────────── */
+    #site-footer {
+      background: var(--dark);
+      padding: 64px 0 0 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 64px;
+    }
+    .footer-col-heading {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .footer-contact p,
+    .footer-contact a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.9;
+      display: block;
+      transition: color 0.25s ease;
+    }
+    .footer-contact a:hover { color: white; }
+    .footer-links-col a {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      display: block;
+      line-height: 2.2;
+      letter-spacing: 0.04em;
+      transition: color 0.25s ease;
+    }
+    .footer-links-col a:hover { color: white; }
+    .footer-links-col a.active { color: var(--crimson); }
+    .footer-hours-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 16px;
+    }
+    .footer-hours-day,
+    .footer-hours-time {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.9;
+    }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 24px 0;
+      margin-top: 48px;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .slots-grid { grid-template-columns: 1fr; gap: 40px; }
+      #info-strip { flex-direction: column; }
+      .info-tile { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+      .info-tile:last-child { border-bottom: none; }
+    }
+    @media (max-width: 768px) {
+      .nav-row-1 { padding: 0 20px; }
+      .nav-link-group { display: none; }
+      #hamburger-btn { display: flex; }
+      .hero-content { padding: 0 24px 36px; }
+      .hero-title { font-size: 36px; }
+      .main-wrap { padding: 40px 20px 64px; }
+      .footer-inner { grid-template-columns: 1fr; gap: 40px; }
+    }
+    @media (max-width: 600px) {
+      #input-last-name { width: 120px; }
+      #input-audit { width: 100px; }
+      .verify-bar-inner { height: auto; padding: 12px 20px; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── NAV ─────────────────────────────────────────────────── -->
+  <nav id="main-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-row-1">
+      <div class="nav-link-group">
+        <a href="index.html">Home</a>
+        <a href="court-booking.html">Court Booking</a>
+      </div>
+      <div class="nav-logo-wrap">
+        <a href="index.html" aria-label="NYAC Travers Island home">
+          <img src="NYAC.Website.Photos/NYAC.logo.png" alt="NYAC Logo" class="nav-logo"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <span class="nav-logo-text" style="display:none;">NYAC</span>
+        </a>
+      </div>
+      <div class="nav-link-group">
+        <a href="private-lessons.html">Private Lessons</a>
+        <a href="clinics.html" class="active">Clinics</a>
+        <button id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <div id="mobile-nav" role="menu">
+      <a href="index.html">Home</a>
+      <a href="court-booking.html">Court Booking</a>
+      <a href="private-lessons.html">Private Lessons</a>
+      <a href="clinics.html">Clinics</a>
+    </div>
+  </nav>
+
+<!-- ─── MAIN CONTENT ─────────────────────────────────────────── -->
+  <div id="main-content" hidden>
+
+    <!-- Hero -->
+    <section id="hero-section" aria-label="Page hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">NYAC Travers Island</p>
+        <hr class="hero-divider">
+        <h1 class="hero-title">Weekend Clinics</h1>
+        <p class="hero-subtitle">Saturday &amp; Sunday &middot; Travers Island</p>
+      </div>
+    </section>
+
+    <!-- Verification Bar -->
+    <div id="verify-bar" role="region" aria-label="Member verification">
+      <div class="verify-bar-inner">
+
+        <!-- State 1: unverified -->
+        <div id="vbar-state-1" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%;">
+          <span class="verify-label">Member</span>
+          <input id="input-last-name" class="verify-input" type="text"
+            placeholder="Last name" autocomplete="family-name" aria-label="Last name">
+          <input id="input-audit" class="verify-input" type="text"
+            placeholder="Audit #" inputmode="numeric" aria-label="Audit number">
+          <button id="btn-verify" class="btn-crimson" onclick="doVerify()">Verify</button>
+          <span id="verify-error-1" class="verify-error" hidden aria-live="polite"></span>
+        </div>
+
+        <!-- State 2: verified, code pending -->
+        <div id="vbar-state-2" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;width:100%;">
+          <span class="verify-greeting" id="vbar-greeting"></span>
+          <div class="vbar-divider" aria-hidden="true"></div>
+          <span class="verify-label">Access Code</span>
+          <input id="input-code" class="verify-input" type="text"
+            placeholder="Enter code" autocomplete="off" aria-label="Access code">
+          <button id="btn-code" class="btn-crimson" onclick="doVerifyCode()">Submit Code</button>
+          <span id="verify-error-2" class="verify-error" hidden aria-live="polite"></span>
+        </div>
+
+        <!-- State 3: fully verified -->
+        <div id="vbar-state-3" style="display:none;align-items:center;gap:10px;width:100%;">
+          <span class="verify-status-check" aria-hidden="true">✓</span>
+          <span class="verify-status" id="vbar-status" aria-live="polite"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Slot Grid -->
+    <main class="main-wrap">
+      <div class="slots-grid">
+
+        <!-- Saturday -->
+        <div class="day-column">
+          <div class="day-header fade-up">
+            <p class="section-label">Weekend Clinics</p>
+            <hr class="divider-crimson">
+            <div class="day-label">Saturday</div>
+            <div class="day-date-text" id="sat-date-label"></div>
+          </div>
+          <div id="sat-slots"></div>
+        </div>
+
+        <!-- Sunday -->
+        <div class="day-column">
+          <div class="day-header fade-up">
+            <p class="section-label">Weekend Clinics</p>
+            <hr class="divider-crimson">
+            <div class="day-label">Sunday</div>
+            <div class="day-date-text" id="sun-date-label"></div>
+          </div>
+          <div id="sun-slots"></div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Info Strip -->
+    <div id="info-strip" role="region" aria-label="Clinic policies">
+      <div class="info-tile">
+        <span class="info-tile-label">Cancellation Policy</span>
+        <p class="info-tile-value">Cancel before the session starts to avoid a late-cancel flag. Cancellations within 15 minutes of start time are flagged on your account.</p>
+      </div>
+      <div class="info-tile">
+        <span class="info-tile-label">Guest Policy</span>
+        <p class="info-tile-value">Members may bring up to 4 guests per session. Guest names are required at signup and count toward the 12-person capacity.</p>
+      </div>
+      <div class="info-tile">
+        <span class="info-tile-label">Access Code</span>
+        <p class="info-tile-value">A daily access code is distributed at the Travers Island gate each weekend morning. Contact the tennis house for assistance.</p>
+      </div>
+    </div>
+
+  </div><!-- /#main-content -->
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────── -->
+  <footer id="site-footer" role="contentinfo">
+    <div class="footer-inner">
+
+      <div class="footer-contact">
+        <span class="footer-col-heading">Contact</span>
+        <p>1 Travers Island Road</p>
+        <p>Pelham Bay, NY 10461</p>
+        <a href="tel:2127677000">(212) 767-7000</a>
+        <a href="mailto:tennis@nyac.org">tennis@nyac.org</a>
+      </div>
+
+      <div class="footer-links-col">
+        <span class="footer-col-heading">Quick Links</span>
+        <a href="index.html">Home</a>
+        <a href="court-booking.html">Court Booking</a>
+        <a href="private-lessons.html">Private Lessons</a>
+        <a href="clinics.html" class="active">Clinics</a>
+      </div>
+
+      <div class="footer-hours">
+        <span class="footer-col-heading">Hours of Operation</span>
+        <div class="footer-hours-row">
+          <span class="footer-hours-day">Mon &ndash; Fri</span>
+          <span class="footer-hours-time">7:00 AM &ndash; 9:00 PM</span>
+          <span class="footer-hours-day">Sat &ndash; Sun</span>
+          <span class="footer-hours-time">6:30 AM &ndash; 8:00 PM</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 New York Athletic Club &mdash; Travers Island Tennis
+    </div>
+  </footer>
+
+  <!-- ─── JAVASCRIPT ────────────────────────────────────────────── -->
+  <script>
+    'use strict';
+
+    /* ============================================================
+       STATE
+    ============================================================ */
+    let member       = null; // { id, first_name, last_name, audit_number }
+    let familyAdults = [];
+    let codeVerified = false;
+    let satDate      = '';
+    let sunDate      = '';
+
+    // Keyed by "sat-8", "sat-9", "sun-10", etc.
+    const slotsByKey = {};
+
+    const mySignups      = {}; // { [slotId]: { signupId, guestCount } }
+    const waitlistBySlot = {}; // { [slotId]: { id, position } }
+
+    let activeFormKey = null;
+
+    /* ============================================================
+       SLOT CONFIG (fixed labels)
+    ============================================================ */
+    const SLOT_CONFIG = [
+      { hour: 8,  label: "Men's Clinic",   timeLabel: '8:00 AM',  badgeClass: 'badge-mens',   badgeText: "Men's"   },
+      { hour: 9,  label: "Women's Clinic", timeLabel: '9:00 AM',  badgeClass: 'badge-womens', badgeText: "Women's" },
+      { hour: 10, label: 'Mixed Clinic',   timeLabel: '10:00 AM', badgeClass: 'badge-mixed',  badgeText: 'Mixed'   },
+      { hour: 11, label: 'Mixed Clinic',   timeLabel: '11:00 AM', badgeClass: 'badge-mixed',  badgeText: 'Mixed'   },
+    ];
+
+    /* ============================================================
+       EASTERN TIME UTILITIES
+    ============================================================ */
+    function etParts(date) {
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+      });
+      const out = {};
+      fmt.formatToParts(date).forEach(p => { out[p.type] = p.value; });
+      return out;
+    }
+
+    function isInAccessWindow() {
+      if (new URLSearchParams(location.search).has('preview')) return true;
+      const p   = etParts(new Date());
+      const dow = p.weekday;
+      const tot = parseInt(p.hour, 10) * 60 + parseInt(p.minute, 10);
+      if (dow === 'Sat') return tot >= 5 * 60;
+      if (dow === 'Sun') return tot < 15 * 60;
+      return false;
+    }
+
+    function getNextOpenTime() {
+      const p   = etParts(new Date());
+      const dow = p.weekday;
+      const tot = parseInt(p.hour, 10) * 60 + parseInt(p.minute, 10);
+      const yr  = parseInt(p.year,  10);
+      const mo  = parseInt(p.month, 10) - 1;
+      const dy  = parseInt(p.day,   10);
+
+      if (dow === 'Sat' && tot < 5 * 60) {
+        return formatNextOpen(new Date(yr, mo, dy));
+      }
+      const dowNum = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[dow] ?? 0;
+      const daysUntilSat = ((6 - dowNum) + 7) % 7 || 7;
+      return formatNextOpen(new Date(yr, mo, dy + daysUntilSat));
+    }
+
+    function formatNextOpen(d) {
+      const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+      return `Opens <strong>${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}</strong> at 5:00 AM Eastern`;
+    }
+
+    function getWeekendDates() {
+      const p   = etParts(new Date());
+      const dow = p.weekday;
+      const yr  = parseInt(p.year,  10);
+      const mo  = parseInt(p.month, 10) - 1;
+      const dy  = parseInt(p.day,   10);
+      const pad2 = n => String(n).padStart(2, '0');
+      const fmt  = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+
+      if (dow === 'Sun') {
+        // Access window on Sunday — this weekend's Saturday was yesterday
+        return {
+          satDate: fmt(new Date(yr, mo, dy - 1)),
+          sunDate: fmt(new Date(yr, mo, dy)),
+        };
+      }
+
+      // Saturday or any weekday (preview) — find upcoming Saturday
+      const dowNum = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[dow] ?? 6;
+      const daysUntilSat = (6 - dowNum + 7) % 7;
+      return {
+        satDate: fmt(new Date(yr, mo, dy + daysUntilSat)),
+        sunDate: fmt(new Date(yr, mo, dy + daysUntilSat + 1)),
+      };
+    }
+
+    function formatDisplayDate(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      const months = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+      return `${months[m-1]} ${d}, ${y}`;
+    }
+
+    function getTodayDayKey() {
+      const dow = etParts(new Date()).weekday;
+      return dow === 'Sun' ? 'sun' : 'sat';
+    }
+
+    function getCodeVerifySlotId() {
+      const dayKey = getTodayDayKey();
+      for (const cfg of SLOT_CONFIG) {
+        const slot = slotsByKey[`${dayKey}-${cfg.hour}`];
+        if (slot) return slot.id;
+      }
+      return null;
+    }
+
+    /* ============================================================
+       INIT
+    ============================================================ */
+    function init() {
+      // Fade-up observer
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+      document.getElementById('main-content').hidden = false;
+
+      // Only show verification bar during the access window
+      if (!isInAccessWindow()) {
+        document.getElementById('verify-bar').hidden = true;
+      }
+
+      const dates = getWeekendDates();
+      satDate = dates.satDate;
+      sunDate = dates.sunDate;
+      document.getElementById('sat-date-label').textContent = formatDisplayDate(satDate);
+      document.getElementById('sun-date-label').textContent = formatDisplayDate(sunDate);
+      renderSkeletons('sat');
+      renderSkeletons('sun');
+      loadSlots();
+    }
+
+    /* ============================================================
+       SLOT LOADING
+    ============================================================ */
+    async function loadSlots() {
+      await Promise.all([
+        fetchSlotsForDay('sat', satDate),
+        fetchSlotsForDay('sun', sunDate),
+      ]);
+    }
+
+    async function fetchSlotsForDay(day, date) {
+      const container = document.getElementById(`${day}-slots`);
+      try {
+        const res  = await fetch(`/api/clinics/slots?date=${date}`);
+        const rows = await res.json();
+        if (!res.ok) throw new Error(rows.error || 'Failed to load');
+
+        const byHour = {};
+        (Array.isArray(rows) ? rows : []).forEach(r => { byHour[r.hour] = r; });
+
+        const html = SLOT_CONFIG.map(cfg => {
+          const key  = `${day}-${cfg.hour}`;
+          slotsByKey[key] = byHour[cfg.hour] || null;
+          return buildCardHTML(day, cfg, slotsByKey[key]);
+        }).join('');
+
+        container.innerHTML = html;
+
+        // Observe new fade-up elements
+        container.querySelectorAll('.fade-up').forEach(el => {
+          const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+              if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+          }, { threshold: 0.1 });
+          obs.observe(el);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="card-error" style="margin-bottom:16px;">`
+          + `Unable to load ${day === 'sat' ? 'Saturday' : 'Sunday'} slots. Please refresh.</div>`;
+      }
+    }
+
+    /* ============================================================
+       CARD BUILDER
+    ============================================================ */
+    function buildCardHTML(day, cfg, slot) {
+      const key = `${day}-${cfg.hour}`;
+
+      if (!slot) {
+        return `
+          <div class="slot-wrapper fade-up">
+            <div class="slot-card">
+              <div class="card-top">
+                <div>
+                  <span class="card-name">${cfg.label}</span>
+                  <span class="card-time">${cfg.timeLabel}</span>
+                </div>
+                <span class="card-badge ${cfg.badgeClass}">${cfg.badgeText}</span>
+              </div>
+              <div class="card-spots">
+                <span class="spots-text not-scheduled">Not Scheduled</span>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      const remaining  = slot.capacity - slot.signed_up_count;
+      const spotsClass = slot.is_full ? 'spots-full' : remaining <= 3 ? 'spots-low' : '';
+      const spotsText  = slot.is_full
+        ? 'Session Full'
+        : `${remaining} spot${remaining !== 1 ? 's' : ''} remaining`;
+
+      return `
+        <div class="slot-wrapper fade-up">
+          <div class="slot-card" id="card-${key}">
+            <div class="card-top">
+              <div>
+                <span class="card-name">${cfg.label}</span>
+                <span class="card-time">${cfg.timeLabel}</span>
+              </div>
+              <span class="card-badge ${cfg.badgeClass}">${cfg.badgeText}</span>
+            </div>
+            <div class="card-spots">
+              <span class="spots-text ${spotsClass}" id="spots-${key}">${spotsText}</span>
+            </div>
+            <div class="card-error" id="card-error-${key}" hidden></div>
+            <div class="card-warn"  id="card-warn-${key}"  hidden></div>
+            <div class="card-attendees" id="attendees-${key}"></div>
+            <div class="card-actions"   id="actions-${key}"></div>
+          </div>
+          <div class="inline-form" id="form-${key}" hidden></div>
+        </div>`;
+    }
+
+    function renderSkeletons(day) {
+      document.getElementById(`${day}-slots`).innerHTML = SLOT_CONFIG.map(() => `
+        <div class="slot-wrapper fade-up">
+          <div class="slot-card">
+            <div class="skeleton skel-name"></div>
+            <div class="skeleton skel-time"></div>
+            <div class="skeleton skel-spots"></div>
+            <div class="skeleton skel-btn"></div>
+          </div>
+        </div>`).join('');
+    }
+
+    /* ============================================================
+       CARD ACTIONS
+    ============================================================ */
+    function updateCardActions(key) {
+      const el   = document.getElementById(`actions-${key}`);
+      if (!el) return;
+      const slot = slotsByKey[key];
+      if (!slot) return;
+
+      if (waitlistBySlot[slot.id]) {
+        el.innerHTML = `<span class="btn-muted">On Waitlist</span>`;
+        return;
+      }
+      if (mySignups[slot.id]) {
+        el.innerHTML = '';
+        return;
+      }
+      if (!member || !codeVerified) {
+        el.innerHTML = '';
+        return;
+      }
+      el.innerHTML = slot.is_full
+        ? `<button class="btn-outline" onclick="openForm('${key}','waitlist')">Join Waitlist</button>`
+        : `<button class="btn-crimson" onclick="openForm('${key}','signup')">Sign Up</button>`;
+    }
+
+    function updateAllCardActions() {
+      Object.keys(slotsByKey).forEach(k => updateCardActions(k));
+    }
+
+    function updateSpotsDisplay(key, slot) {
+      const el = document.getElementById(`spots-${key}`);
+      if (!el || !slot) return;
+      const remaining  = slot.capacity - slot.signed_up_count;
+      el.className = 'spots-text' + (slot.is_full ? ' spots-full' : remaining <= 3 ? ' spots-low' : '');
+      el.textContent = slot.is_full
+        ? 'Session Full'
+        : `${remaining} spot${remaining !== 1 ? 's' : ''} remaining`;
+    }
+
+    function decrementSpots(key, by) {
+      const slot = slotsByKey[key];
+      if (!slot) return;
+      slot.signed_up_count = Math.min(slot.signed_up_count + by, slot.capacity);
+      slot.is_full = slot.signed_up_count >= slot.capacity;
+      updateSpotsDisplay(key, slot);
+    }
+
+    /* ============================================================
+       MEMBER VERIFICATION
+    ============================================================ */
+    async function doVerify() {
+      const lastName    = document.getElementById('input-last-name').value.trim();
+      const auditNumber = document.getElementById('input-audit').value.trim();
+      const errEl       = document.getElementById('verify-error-1');
+      const btn         = document.getElementById('btn-verify');
+      hideEl(errEl);
+
+      if (!lastName || !auditNumber) {
+        showError(errEl, 'Please enter your last name and audit number.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying…';
+
+      try {
+        const res  = await fetch('/api/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ last_name: lastName, audit_number: auditNumber }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.adults || !data.adults.length) {
+          showError(errEl, 'Member not found. Check your last name and audit number.');
+          return;
+        }
+
+        familyAdults = data.adults;
+        const a = familyAdults[0];
+        member = { id: a.id, first_name: a.first_name, last_name: a.last_name, audit_number: a.audit_number };
+
+        document.getElementById('vbar-greeting').textContent =
+          `Verified ${member.last_name}, #${member.audit_number}`;
+        hideEl(document.getElementById('vbar-state-1'));
+        showFlex(document.getElementById('vbar-state-2'));
+
+        loadAllAttendees();
+
+      } catch {
+        showError(errEl, 'Something went wrong. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify';
+      }
+    }
+
+    /* ============================================================
+       ACCESS CODE VERIFICATION
+    ============================================================ */
+    async function doVerifyCode() {
+      const code  = document.getElementById('input-code').value.trim();
+      const errEl = document.getElementById('verify-error-2');
+      const btn   = document.getElementById('btn-code');
+      hideEl(errEl);
+
+      if (!code) {
+        showError(errEl, 'Please enter the access code.');
+        return;
+      }
+
+      const slotId = getCodeVerifySlotId();
+      if (!slotId) {
+        showError(errEl, 'No slots loaded yet. Please wait and try again.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Checking…';
+
+      try {
+        const res  = await fetch('/api/clinics/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, slot_id: slotId }),
+        });
+
+        if (!res.ok) {
+          showError(errEl, 'Incorrect code. Try again.');
+          return;
+        }
+
+        codeVerified = true;
+        document.getElementById('vbar-status').textContent =
+          `Verified ${member.last_name}, #${member.audit_number} · Access Granted`;
+        hideEl(document.getElementById('vbar-state-2'));
+        showFlex(document.getElementById('vbar-state-3'));
+        updateAllCardActions();
+
+      } catch {
+        showError(errEl, 'Something went wrong. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Code';
+      }
+    }
+
+    /* ============================================================
+       ATTENDEES
+    ============================================================ */
+    async function loadAllAttendees() {
+      await Promise.all(
+        Object.entries(slotsByKey)
+          .filter(([, slot]) => slot)
+          .map(([key, slot]) => loadAttendeesForSlot(key, slot))
+      );
+    }
+
+    async function loadAttendeesForSlot(key, slot) {
+      if (!member) return;
+      try {
+        const params = new URLSearchParams({
+          audit_number: member.audit_number,
+          last_name:    member.last_name,
+        });
+        const res = await fetch(`/api/clinics/slots/${slot.id}/attendees?${params}`);
+        if (!res.ok) return;
+        const attendees = await res.json();
+        if (!Array.isArray(attendees)) return;
+        renderAttendeeList(key, slot.id, attendees);
+      } catch { /* silent */ }
+    }
+
+    function renderAttendeeList(key, slotId, attendees) {
+      const listEl = document.getElementById(`attendees-${key}`);
+      if (!listEl) return;
+
+      let anyFamilyEntry = false;
+
+      const items = attendees.map(a => {
+        const isFamily = familyAdults.some(adult => adult.id === a.member_id);
+        
+        if (isFamily) {
+          anyFamilyEntry = true;
+          if (!mySignups[slotId]) {
+            mySignups[slotId] = { signupId: a.id, guestCount: 0 };
+            updateCardActions(key);
+          }
+        }
+
+        const cancelBtn = isFamily
+          ? `<span class="cancel-link" onclick="doCancel('${key}','${slotId}','${a.id}')"
+               role="button" tabindex="0" aria-label="Cancel signup">Cancel</span>`
+          : '';
+        const idAttr = isFamily ? `id="my-attendee-${key}-${a.id}"` : '';
+        return `<li class="attendee-item" ${idAttr}>
+          <span class="attendee-name">${esc(a.display_name)}</span>${cancelBtn}
+        </li>`;
+      }).join('');
+
+      listEl.innerHTML = `<ul class="attendee-list" aria-label="Attendees">${items}</ul>`;
+    }
+
+    /* ============================================================
+       INLINE FORMS
+    ============================================================ */
+    function openForm(key, type) {
+      if (activeFormKey && activeFormKey !== key) closeForm(activeFormKey);
+      activeFormKey = key;
+
+      const formEl = document.getElementById(`form-${key}`);
+      const slot   = slotsByKey[key];
+      if (!formEl || !slot) return;
+
+      const title  = type === 'signup' ? 'Sign Up' : 'Join Waitlist';
+      const action = type === 'signup'
+        ? `doSignup('${key}','${slot.id}')`
+        : `doWaitlist('${key}','${slot.id}')`;
+
+      const familyCheckboxes = familyAdults.map((adult, idx) => `
+        <label class="form-row" style="cursor:pointer; margin-bottom:8px;">
+          <input type="checkbox" id="adult-${key}-${adult.id}" value="${adult.id}" ${idx === 0 ? 'checked' : ''}>
+          <span style="font-family:var(--font-ui); font-size:13px; margin-left:8px;">
+            ${esc(adult.first_name)} ${esc(adult.last_name)}
+          </span>
+        </label>
+      `).join('');
+
+      formEl.innerHTML = `
+        <span class="form-heading">${title}</span>
+        <div style="margin-bottom:16px;">
+          <span class="form-label" style="display:block; margin-bottom:8px;">Attending Members</span>
+          ${familyCheckboxes}
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="guests-${key}">Guests</label>
+          <select id="guests-${key}" class="form-select" onchange="updateGuestInputs('${key}')">
+            <option value="0">0 guests</option>
+            <option value="1">1 guest</option>
+            <option value="2">2 guests</option>
+            <option value="3">3 guests</option>
+            <option value="4">4 guests</option>
+          </select>
+        </div>
+        <div id="guest-inputs-${key}" class="guest-inputs"></div>
+        <div class="form-error" id="form-error-${key}" hidden></div>
+        <div class="form-actions">
+          <button class="btn-crimson" id="form-submit-${key}" onclick="${action}">
+            Confirm ${title}
+          </button>
+          <button class="btn-cancel-form" onclick="closeForm('${key}')">Cancel</button>
+        </div>`;
+
+      formEl.hidden = false;
+
+      const cardEl = document.getElementById(`card-${key}`);
+      if (cardEl) {
+        cardEl.style.borderBottom = '1px solid var(--light-gray)';
+      }
+    }
+
+    function closeForm(key) {
+      const formEl = document.getElementById(`form-${key}`);
+      if (formEl) formEl.hidden = true;
+      if (activeFormKey === key) activeFormKey = null;
+    }
+
+    function updateGuestInputs(key) {
+      const count     = parseInt(document.getElementById(`guests-${key}`)?.value || '0', 10);
+      const container = document.getElementById(`guest-inputs-${key}`);
+      if (!container) return;
+      container.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        const row = document.createElement('div');
+        row.className = 'form-row';
+        row.innerHTML = `
+          <label class="form-label" for="guest-name-${key}-${i}">Guest ${i}</label>
+          <input id="guest-name-${key}-${i}" class="form-text-input"
+            type="text" placeholder="Full name" aria-label="Guest ${i} name">`;
+        container.appendChild(row);
+      }
+    }
+
+    /* ============================================================
+       SIGNUP
+    ============================================================ */
+    async function doSignup(key, slotId) {
+      const btn        = document.getElementById(`form-submit-${key}`);
+      const errEl      = document.getElementById(`form-error-${key}`);
+      const guestCount = parseInt(document.getElementById(`guests-${key}`)?.value || '0', 10);
+      hideEl(errEl);
+
+      const selectedAdults = familyAdults.filter(a => document.getElementById(`adult-${key}-${a.id}`)?.checked);
+      if (selectedAdults.length === 0) {
+        showError(errEl, 'Please select at least one attending member.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing up…';
+
+      const guestNames = [];
+      for (let i = 1; i <= guestCount; i++) {
+        guestNames.push(document.getElementById(`guest-name-${key}-${i}`)?.value.trim() || '');
+      }
+
+      try {
+        let anySuccess = false;
+        let lastError = null;
+
+        for (let i = 0; i < selectedAdults.length; i++) {
+          const adult = selectedAdults[i];
+          const currGuestCount = (i === 0) ? guestCount : 0;
+          const currGuestNames = (i === 0) ? guestNames : [];
+
+          const res  = await fetch('/api/clinics/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slot_id:      slotId,
+              last_name:    member.last_name,
+              audit_number: member.audit_number,
+              member_id:    adult.id,
+              guest_count:  currGuestCount,
+              guest_names:  currGuestNames,
+            }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            lastError = data.error === 'This session is full'
+              ? 'This session is now full.'
+              : (data.error || 'Signup failed for ' + adult.first_name);
+          } else {
+            anySuccess = true;
+            if (adult.id === member.id) {
+              mySignups[slotId] = { signupId: data.id, guestCount: currGuestCount };
+            }
+          }
+        }
+
+        if (!anySuccess && lastError) {
+          showError(errEl, lastError);
+          return;
+        } else if (lastError) {
+          showError(errEl, 'Partial success: ' + lastError);
+          setTimeout(() => closeForm(key), 2500);
+        } else {
+          closeForm(key);
+        }
+
+        await refreshSlot(key, slotId);
+        await loadAttendeesForSlot(key, slotsByKey[key]);
+        updateCardActions(key);
+
+      } catch {
+        showError(errEl, 'Something went wrong. Please try again.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Confirm Sign Up'; }
+      }
+    }
+
+    /* ============================================================
+       WAITLIST
+    ============================================================ */
+    async function doWaitlist(key, slotId) {
+      const btn        = document.getElementById(`form-submit-${key}`);
+      const errEl      = document.getElementById(`form-error-${key}`);
+      const guestCount = parseInt(document.getElementById(`guests-${key}`)?.value || '0', 10);
+      hideEl(errEl);
+
+      const selectedAdults = familyAdults.filter(a => document.getElementById(`adult-${key}-${a.id}`)?.checked);
+      if (selectedAdults.length === 0) {
+        showError(errEl, 'Please select at least one attending member.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Joining…';
+
+      const guestNames = [];
+      for (let i = 1; i <= guestCount; i++) {
+        guestNames.push(document.getElementById(`guest-name-${key}-${i}`)?.value.trim() || '');
+      }
+
+      try {
+        let anySuccess = false;
+        let lastError = null;
+
+        for (let i = 0; i < selectedAdults.length; i++) {
+          const adult = selectedAdults[i];
+          const currGuestCount = (i === 0) ? guestCount : 0;
+          const currGuestNames = (i === 0) ? guestNames : [];
+
+          const res  = await fetch('/api/clinics/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slot_id:      slotId,
+              last_name:    member.last_name,
+              audit_number: member.audit_number,
+              member_id:    adult.id,
+              guest_count:  currGuestCount,
+              guest_names:  currGuestNames,
+            }),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            lastError = data.error || ('Waitlist failed for ' + adult.first_name);
+          } else {
+            anySuccess = true;
+            if (adult.id === member.id) {
+              waitlistBySlot[slotId] = { id: data.id, position: data.waitlist_position };
+              addWaitlistEntry(key, data.waitlist_position);
+            }
+          }
+        }
+
+        if (!anySuccess && lastError) {
+          showError(errEl, lastError);
+          return;
+        } else if (lastError) {
+          showError(errEl, 'Partial success: ' + lastError);
+          setTimeout(() => closeForm(key), 2500);
+        } else {
+          closeForm(key);
+        }
+
+        updateCardActions(key);
+
+      } catch {
+        showError(errEl, 'Something went wrong. Please try again.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Confirm Join Waitlist'; }
+      }
+    }
+
+    /* ============================================================
+       CANCELLATION
+    ============================================================ */
+    async function doCancel(key, slotId, signupId) {
+      const warnEl = document.getElementById(`card-warn-${key}`);
+      const errEl  = document.getElementById(`card-error-${key}`);
+      hideEl(warnEl);
+      hideEl(errEl);
+
+      if (!confirm('Cancel your signup for this session?')) return;
+
+      try {
+        const res  = await fetch(`/api/clinics/signup/${signupId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ last_name: member.last_name, audit_number: member.audit_number }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showEl(errEl, data.error || 'Cancellation failed. Please try again.');
+          return;
+        }
+
+        if (data.signup?.late_cancel === true) {
+          showEl(warnEl, 'This was a late cancellation and has been flagged on your account.');
+        }
+
+        delete mySignups[slotId];
+        await refreshSlot(key, slotId);
+        await loadAttendeesForSlot(key, slotsByKey[key]);
+        updateCardActions(key);
+
+      } catch {
+        showEl(errEl, 'Something went wrong. Please try again.');
+      }
+    }
+
+    async function refreshSlot(key, slotId) {
+      try {
+        const date = key.startsWith('sat') ? satDate : sunDate;
+        const res  = await fetch(`/api/clinics/slots?date=${date}`);
+        const rows = await res.json();
+        if (!res.ok || !Array.isArray(rows)) return;
+        const slot = rows.find(r => r.id === slotId);
+        if (slot) { slotsByKey[key] = slot; updateSpotsDisplay(key, slot); }
+      } catch { /* silent */ }
+    }
+
+    /* ============================================================
+       ATTENDEE LIST HELPERS
+    ============================================================ */
+    function addMemberToAttendees(key, slotId, signupId, firstName) {
+      const listEl      = document.getElementById(`attendees-${key}`);
+      if (!listEl) return;
+      const displayName = `${firstName} ${member.last_name.charAt(0)}.`;
+      const newItem     = `<li class="attendee-item" id="my-attendee-${key}-${signupId}">
+        <span class="attendee-name">${esc(displayName)}</span>
+        <span class="cancel-link"
+          onclick="doCancel('${key}','${slotId}','${signupId}')"
+          role="button" tabindex="0" aria-label="Cancel your signup">Cancel</span>
+      </li>`;
+      let ul = listEl.querySelector('ul.attendee-list');
+      if (!ul) { listEl.innerHTML = `<ul class="attendee-list">${newItem}</ul>`; }
+      else      { ul.insertAdjacentHTML('afterbegin', newItem); }
+    }
+
+    function addWaitlistEntry(key, position) {
+      const listEl      = document.getElementById(`attendees-${key}`);
+      if (!listEl) return;
+      const displayName = `${member.first_name} ${member.last_name.charAt(0)}.`;
+      const item        = `<li class="attendee-item" id="my-attendee-${key}">
+        <span class="attendee-name">${esc(displayName)}</span>
+        <span class="attendee-waitlist">Waitlist &mdash; Position #${position}</span>
+      </li>`;
+      let ul = listEl.querySelector('ul.attendee-list');
+      if (!ul) { listEl.innerHTML = `<ul class="attendee-list">${item}</ul>`; }
+      else      { ul.insertAdjacentHTML('afterbegin', item); }
+    }
+
+    function removeMemberFromAttendees(key) {
+      document.getElementById(`my-attendee-${key}`)?.remove();
+    }
+
+    /* ============================================================
+       DOM UTILITIES
+    ============================================================ */
+    function showError(el, msg) { el.textContent = msg; el.hidden = false; }
+    function showEl(el, msg)    { el.textContent = msg; el.hidden = false; }
+    function hideEl(el)         { if (el) el.hidden = true; }
+    function showFlex(el)       { el.style.display = 'flex'; }
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ============================================================
+       KEYBOARD SUPPORT
+    ============================================================ */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.classList.contains('cancel-link')) e.target.click();
+    });
+
+    /* ============================================================
+       NAV: scroll shadow + hamburger
+    ============================================================ */
+    window.addEventListener('scroll', () => {
+      document.getElementById('main-nav')
+        ?.classList.toggle('nav-scrolled', window.scrollY > 10);
+    });
+
+    const hamburger = document.getElementById('hamburger-btn');
+    const mobileNav = document.getElementById('mobile-nav');
+    if (hamburger && mobileNav) {
+      hamburger.addEventListener('click', () => {
+        const open = mobileNav.style.display === 'block';
+        mobileNav.style.display = open ? 'none' : 'block';
+        hamburger.setAttribute('aria-expanded', String(!open));
+      });
+    }
+
+    /* ============================================================
+       BOOT
+    ============================================================ */
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
