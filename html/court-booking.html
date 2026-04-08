@@ -1,0 +1,2897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Booking — NYAC Travers Island Tennis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:wght@400;600&family=Montserrat:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --crimson:    #C8102E;
+      --crimson-dk: #A00D23;
+      --white:      #FFFFFF;
+      --off-white:  #FAF8F5;
+      --dark:       #1A1A1A;
+      --mid-gray:   #6B6B6B;
+      --light-gray: #E8E4DF;
+      --charcoal:   #2C2C2C;
+
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-label:   'Cormorant Garamond', Georgia, serif;
+      --font-ui:      'Montserrat', Arial, sans-serif;
+      --font-body:    'Lora', Georgia, serif;
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: var(--dark); background: var(--white); overflow-x: hidden; }
+    a { transition: color 0.25s ease; text-decoration: none; color: inherit; }
+    img { display: block; }
+
+    /* ─── Reusable Classes ──────────────────────────────────────── */
+    .btn-crimson {
+      background-color: var(--crimson);
+      color: var(--white);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 14px 32px;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+      transition: background-color 0.25s ease;
+    }
+    .btn-crimson:hover { background-color: var(--crimson-dk); }
+    .btn-crimson:disabled {
+      background-color: var(--light-gray);
+      color: var(--mid-gray);
+      cursor: not-allowed;
+    }
+    .btn-crimson:disabled:hover { background-color: var(--light-gray); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.6);
+      color: white;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      display: inline-block;
+      cursor: pointer;
+      transition: background 0.25s ease;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    .btn-light {
+      background: transparent;
+      border: 1px solid var(--light-gray);
+      color: var(--dark);
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 14px 32px;
+      display: inline-block;
+      cursor: pointer;
+      transition: background 0.25s ease;
+    }
+    .btn-light:hover { background: var(--off-white); }
+
+    .section-label {
+      font-family: var(--font-label);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      display: block;
+    }
+
+    .divider-crimson {
+      border: none;
+      border-top: 1px solid var(--crimson);
+      width: 48px;
+      margin: 12px 0 22px 0;
+    }
+    .divider-crimson.centered {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .section-pad { padding: 96px 0; }
+
+    .nav-scrolled { box-shadow: 0 2px 16px rgba(0,0,0,0.09); }
+
+    /* ─── Fade-in on Scroll ─────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── NAV ───────────────────────────────────────────────────── */
+    #main-nav {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      z-index: 50;
+      background: var(--white);
+      border-bottom: 1px solid var(--light-gray);
+      transition: box-shadow 0.25s ease;
+    }
+
+    .nav-row-1 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 40px;
+      gap: 40px;
+      position: relative;
+    }
+    .nav-logo-wrap {
+      position: static;
+      transform: none;
+    }
+    .nav-logo {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+    }
+    .nav-left { width: 80px; }
+
+    #hamburger-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+    }
+    #hamburger-btn span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--dark);
+      transition: all 0.25s ease;
+    }
+
+    .nav-link-group {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+    .nav-link-group a {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--dark);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 4px 0;
+    }
+    .nav-link-group a:hover { color: var(--crimson); }
+    .nav-link-group a.active { color: var(--crimson); border-bottom: 2px solid var(--crimson); }
+
+    /* Mobile nav */
+    #mobile-nav {
+      display: none;
+      background: var(--white);
+      border-top: 1px solid var(--light-gray);
+    }
+    #mobile-nav a {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--dark);
+      padding: 0 24px;
+      height: 48px;
+      line-height: 48px;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    #mobile-nav a:hover { color: var(--crimson); }
+
+    /* ─── STICKY BOOK CTA ───────────────────────────────────────── */
+    /* ─── FOOTER ────────────────────────────────────────────────── */
+    #site-footer {
+      background: var(--dark);
+      padding: 64px 0 0 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 64px;
+    }
+    .footer-logo {
+      height: 38px;
+      filter: brightness(0) invert(1);
+      opacity: 0.8;
+      margin-bottom: 20px;
+    }
+    .footer-contact p,
+    .footer-contact a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.8;
+      display: block;
+    }
+    .footer-contact a:hover { color: white; }
+    .footer-col-heading {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .footer-links a {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      display: block;
+      line-height: 2.2;
+      letter-spacing: 0.04em;
+    }
+    .footer-links a:hover { color: white; }
+    .footer-hours-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 16px;
+    }
+    .footer-hours-day,
+    .footer-hours-time {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.9;
+    }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 24px 0;
+      margin-top: 48px;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── SLIM HERO ─────────────────────────────────────────────── */
+    #slim-hero {
+      height: 320px;
+      background: url('/Users/jakeliess/Desktop/NYAC.Website.Photos/Side.View.Courts.jpg') center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding-top: 76px; /* account for fixed nav */
+    }
+    #slim-hero .hero-eyebrow {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--crimson);
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+    }
+    #slim-hero .slim-hero-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.7);
+      width: 48px;
+      margin: 1px auto;
+    }
+    #slim-hero h1 {
+      font-family: var(--font-display);
+      font-size: 56px;
+      font-weight: 400;
+      color: white;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    }
+    #slim-hero .hero-location {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      margin-top: 4px;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    }
+
+    /* ─── BOOKING WIDGET ────────────────────────────────────────── */
+    #booking-widget {
+      background: var(--off-white);
+      padding: 28px 0 96px;
+    }
+
+    .booking-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    /* ─── FILTER BAR ────────────────────────────────────────────── */
+    #filter-bar {
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      padding: 14px 20px;
+      margin: 0 auto 24px;
+      max-width: fit-content;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      white-space: nowrap;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 7px 14px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--dark);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+    }
+    .filter-pill:hover {
+      border-color: var(--crimson);
+      color: var(--crimson);
+    }
+    .filter-pill.selected {
+      background: var(--crimson);
+      color: white;
+      border-color: var(--crimson);
+    }
+    .filter-pill.selected:hover {
+      background: var(--crimson-dk);
+    }
+
+    .clear-filters-btn {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 7px 14px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--mid-gray);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .clear-filters-btn:hover {
+      border-color: var(--crimson);
+      color: var(--crimson);
+    }
+
+    /* Date selector */
+    #date-selector-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    #date-chevron.open {
+      transform: rotate(180deg);
+    }
+
+    #date-expanded-tray {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid var(--light-gray);
+      background: var(--off-white);
+      animation: tray-in 0.18s ease;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 100;
+      max-height: 205px;
+      overflow-y: auto;
+    }
+
+    @keyframes tray-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .date-tray-pill {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 6px 12px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--dark);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-align: left;
+    }
+    .date-tray-pill:hover {
+      border-color: var(--crimson);
+      color: var(--crimson);
+    }
+    .date-tray-pill.selected {
+      background: var(--crimson);
+      color: white;
+      border-color: var(--crimson);
+    }
+    .date-tray-pill-day {
+      font-size: 9px;
+      opacity: 0.75;
+      letter-spacing: 0.12em;
+      min-width: 28px;
+    }
+    .date-tray-pill-num {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* Time + Duration selector wraps */
+    #time-selector-wrap,
+    #duration-selector-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    #time-chevron.open,
+    #duration-chevron.open {
+      transform: rotate(180deg);
+    }
+
+    #time-expanded-tray,
+    #duration-expanded-tray {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid var(--light-gray);
+      background: var(--off-white);
+      animation: tray-in 0.18s ease;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      z-index: 100;
+      max-height: 205px;
+      overflow-y: auto;
+    }
+
+    .court-grid-btn.time-filtered {
+      background: #D8D8D8;
+      border-color: #A0A0A0;
+      color: #888;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .court-poly.time-filtered {
+      fill: rgba(200, 16, 46, 0.3) !important;
+      stroke: var(--crimson) !important;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ─── MAP LAYOUT ────────────────────────────────────────────── */
+    .map-layout {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 32px;
+      padding: 0;
+    }
+
+    /* ─── LEGEND PANEL ──────────────────────────────────────────── */
+    .legend-panel {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      padding: 24px;
+    }
+
+    .legend-heading {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .legend-divider {
+      border: none;
+      border-top: 1px solid var(--light-gray);
+      margin-bottom: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    .legend-item-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--dark);
+    }
+
+    .legend-section { margin-bottom: 20px; }
+
+    .court-count-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 8px;
+      margin-bottom: 12px;
+    }
+
+    .court-count-name {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--dark);
+    }
+
+    .court-count-num {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--crimson);
+      text-align: right;
+    }
+
+    .court-count-total-row {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--light-gray);
+      padding-top: 8px;
+      margin-top: 4px;
+    }
+
+    .court-count-total-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .court-count-total-num {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--crimson);
+    }
+
+    /* ─── MAP WRAP & SVG ────────────────────────────────────────── */
+    .map-wrap {
+      position: relative;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    #court-map-img {
+      display: block;
+      max-width: 100%;
+    }
+
+    #court-svg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Court polygon states */
+    .court-poly {
+      fill: transparent;
+      stroke: transparent;
+      stroke-width: 3.5;
+      stroke-opacity: 1;
+      opacity: 1;
+      cursor: not-allowed;
+      pointer-events: none;
+      transition: fill 0.2s ease, opacity 0.2s ease, stroke-width 0.2s ease;
+    }
+
+    .filters-active .court-poly {
+      stroke: var(--crimson);
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .filters-active .court-poly:hover:not(.unavailable):not(.selected) {
+      fill: rgba(200, 16, 46, 0.15);
+    }
+
+    .filters-active .court-poly.available {
+      fill: rgba(34, 139, 34, 0.28);
+      stroke: #228B22;
+    }
+    .filters-active .court-poly.available:hover:not(.selected) {
+      fill: rgba(34, 139, 34, 0.42);
+    }
+
+    .court-poly.unavailable {
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .filters-active .court-poly.unavailable {
+      fill: rgba(200, 16, 46, 0.3);
+      stroke: var(--crimson);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .court-poly.selected {
+      fill: rgba(255, 140, 0, 0.35);
+      stroke: #FF8C00;
+    }
+
+    .court-poly.dimmed {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    #court-svg-overlay.filters-incomplete:not(.filters-active) .court-poly {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ─── COURT INFO PANEL ──────────────────────────────────────── */
+    #court-info-panel {
+      width: 220px;
+      flex-shrink: 0;
+      align-self: flex-start;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-state-default {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .info-state-default p {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 15px;
+      color: var(--mid-gray);
+      line-height: 1.6;
+    }
+
+    .info-default-icon {
+      color: var(--crimson);
+      opacity: 0.4;
+    }
+
+    .info-state-loading {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .info-court-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--crimson);
+      line-height: 1.2;
+    }
+
+    .info-cluster-name {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .loading-dots {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .loading-dots span {
+      width: 7px;
+      height: 7px;
+      background: var(--crimson);
+      border-radius: 50%;
+      animation: dotPulse 1.2s ease-in-out infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    .info-loading-text {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 13px;
+      color: var(--mid-gray);
+    }
+
+    .info-state-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .info-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .info-back-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-size: 16px;
+      color: var(--mid-gray);
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .info-back-btn:hover { color: var(--crimson); }
+
+    .info-divider {
+      border: none;
+      border-top: 1px solid var(--light-gray);
+      margin: 10px 0 14px;
+    }
+
+    .slots-label {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .no-date-msg {
+      font-family: var(--font-body);
+      font-style: italic;
+      font-size: 13px;
+      color: var(--mid-gray);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .slots-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 14px;
+    }
+    .slots-list::-webkit-scrollbar { width: 3px; }
+    .slots-list::-webkit-scrollbar-track { background: var(--light-gray); }
+    .slots-list::-webkit-scrollbar-thumb { background: var(--crimson); }
+
+    .time-slot-btn {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--dark);
+      padding: 9px 10px;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+    .time-slot-btn:hover { border-color: var(--crimson); color: var(--crimson); }
+    .time-slot-btn.selected { background: var(--crimson); color: white; border-color: var(--crimson); }
+
+    .duration-label {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .duration-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .duration-pill {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 6px 10px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--dark);
+      cursor: pointer;
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    }
+    .duration-pill:hover { border-color: var(--crimson); color: var(--crimson); }
+    .duration-pill.selected { background: var(--crimson); color: white; border-color: var(--crimson); }
+
+    /* ─── COURT BTN WRAP + INLINE POPUP ────────────────────────── */
+    .court-btn-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .court-inline-popup {
+      position: absolute;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 200;
+      white-space: nowrap;
+    }
+
+    .court-inline-popup .pop-confirm {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      border: none;
+      background: var(--crimson);
+      color: var(--white);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .court-inline-popup .pop-confirm:hover { background: var(--crimson-dk); }
+
+    .court-inline-popup .pop-cancel {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--dark);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .court-inline-popup .pop-cancel:hover { border-color: var(--crimson); color: var(--crimson); }
+
+    .btn-light {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-radius: 0;
+      padding: 14px 32px;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--dark);
+      cursor: pointer;
+      transition: border-color 0.25s ease, color 0.25s ease;
+    }
+    .btn-light:hover { border-color: var(--crimson); color: var(--crimson); }
+
+    /* ─── LIVE SUMMARY TABLE ────────────────────────────────────── */
+    .summary-live-table {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px 12px;
+      margin-top: 4px;
+    }
+
+    .summary-live-label {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      line-height: 1.6;
+      white-space: nowrap;
+    }
+
+    .summary-live-value {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    .summary-live-value.empty {
+      color: var(--light-gray);
+    }
+
+    /* ─── BOOKING FLOW PANEL ────────────────────────────────────── */
+    #booking-panel {
+      max-width: 640px;
+      margin: 40px auto 0;
+      scroll-margin-top: 100px;
+      display: none;
+    }
+
+    #booking-panel.visible { display: block; }
+
+    .booking-step {
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      padding: 40px 48px;
+      display: none;
+    }
+
+    .booking-step.active { display: block; }
+
+    .booking-step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .booking-back-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-size: 18px;
+      color: var(--mid-gray);
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+    .booking-back-btn:hover { color: var(--crimson); }
+
+    .booking-step-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--dark);
+    }
+
+    .booking-divider {
+      border: none;
+      border-top: 1px solid var(--light-gray);
+      margin-bottom: 24px;
+    }
+
+    .booking-summary-row {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 10px 16px;
+      margin-bottom: 28px;
+    }
+
+    .summary-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      line-height: 1.8;
+    }
+
+    .summary-value {
+      font-family: var(--font-body);
+      font-size: 16px;
+      color: var(--dark);
+      line-height: 1.8;
+    }
+
+    .booking-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Step 2 — Name Entry */
+    .name-field-group {
+      margin-bottom: 24px;
+    }
+
+    .name-field-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .name-field-input {
+      border: none;
+      border-bottom: 1px solid var(--light-gray);
+      padding: 10px 0;
+      width: 100%;
+      font-family: var(--font-body);
+      font-size: 16px;
+      color: var(--dark);
+      background: transparent;
+      outline: none;
+      transition: border-bottom-color 0.2s ease;
+    }
+    .name-field-input:focus { border-bottom-color: var(--crimson); }
+
+    /* Step 3 — Success */
+    .booking-success {
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .success-check {
+      font-size: 48px;
+      color: var(--crimson);
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .success-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--dark);
+      margin-bottom: 20px;
+    }
+
+    .success-detail {
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--mid-gray);
+      line-height: 1.8;
+      margin-bottom: 6px;
+    }
+
+    .success-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── MOBILE CLUSTER CARDS ──────────────────────────────────── */
+    #mobile-cluster-cards {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .cluster-card {
+      border: 1px solid var(--light-gray);
+      padding: 20px 24px;
+      background: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cluster-card:hover {
+      border-color: var(--crimson);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+
+    .cluster-card-left {}
+
+    .cluster-card-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--dark);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .cluster-card-sub {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .cluster-card-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cluster-card-count {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .cluster-card-arrow {
+      font-family: var(--font-ui);
+      font-size: 16px;
+      color: var(--crimson);
+    }
+
+    /* ─── MOBILE BOTTOM SHEET ───────────────────────────────────── */
+    #mobile-bottom-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 80vh;
+      background: var(--white);
+      border-top: 3px solid var(--crimson);
+      border-radius: 0;
+      z-index: 100;
+      transform: translateY(100%);
+      transition: transform 0.35s ease;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    #mobile-bottom-sheet.open { transform: translateY(0); }
+
+    #mobile-sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+      display: none;
+    }
+    #mobile-sheet-overlay.visible { display: block; }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--light-gray);
+      flex-shrink: 0;
+    }
+
+    .sheet-cluster-name {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--dark);
+    }
+
+    .sheet-close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--mid-gray);
+      line-height: 1;
+      padding: 4px;
+    }
+    .sheet-close-btn:hover { color: var(--dark); }
+
+    .sheet-body {
+      padding: 20px 24px;
+      flex: 1;
+    }
+
+    .sheet-svg-wrap {
+      position: relative;
+      display: block;
+      margin-bottom: 20px;
+      border: 1px solid var(--light-gray);
+      overflow: hidden;
+    }
+
+    .sheet-svg-wrap svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .sheet-date-strip {
+      margin-bottom: 16px;
+    }
+
+    .sheet-date-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .sheet-slots-area {
+      margin-top: 16px;
+    }
+
+    .sheet-slots-label {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--mid-gray);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .sheet-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .sheet-booking-flow {
+      margin-top: 16px;
+    }
+
+    /* ─── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .about-place-text { padding: 96px 48px 96px 48px; }
+      .director-text { padding: 96px 48px 96px 32px; }
+    }
+
+    @media (max-width: 900px) {
+      .news-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      /* Nav */
+      .nav-row-1 { padding: 14px 20px; justify-content: flex-end; }
+      #hamburger-btn { display: flex; }
+      .nav-link-group a { display: none; }
+      .nav-left { width: auto; }
+
+      /* Footer */
+      .footer-inner { grid-template-columns: 1fr; gap: 40px; }
+
+      /* Slim hero */
+      #slim-hero { height: 240px; }
+      #slim-hero h1 { font-size: 36px; }
+
+      /* Booking widget */
+      .booking-inner { padding: 0 20px; }
+
+      /* Filter bar */
+      .filter-row { gap: 8px; }
+      .filter-label { min-width: 80px; }
+
+      /* Map layout — hide legend and info panel, show cluster cards */
+      .map-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .legend-panel { display: none; }
+      #court-info-panel { display: none; }
+      .map-wrap { width: 100%; }
+      #court-map-img { width: 100%; pointer-events: none; }
+
+      #mobile-cluster-cards { display: flex; }
+
+      /* Booking panel on mobile */
+      .booking-step { padding: 24px; }
+
+      /* Map SVG — non-interactive on mobile */
+      #court-svg-overlay { pointer-events: none; }
+    }
+
+    @media (max-width: 600px) {
+      .news-grid { grid-template-columns: 1fr; padding: 0 24px; }
+    }
+
+    .court-label {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      fill: white;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+      paint-order: stroke fill;
+      stroke: rgba(0,0,0,0.55);
+      stroke-width: 3px;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── NAV ─────────────────────────────────────────────────── -->
+  <nav id="main-nav">
+    <div class="nav-row-1">
+      <div class="nav-link-group">
+        <a href="index.html">Home</a>
+        <a href="court-booking.html" class="active">Court Booking</a>
+      </div>
+      <div class="nav-logo-wrap">
+        <a href="index.html">
+          <img src="NYAC.Website.Photos/NYAC.logo.png" alt="NYAC Logo" class="nav-logo">
+        </a>
+      </div>
+      <div class="nav-link-group">
+        <a href="private-lessons.html">Private Lessons</a>
+        <a href="clinics.html">Clinics</a>
+        <button id="hamburger-btn" aria-label="Open menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <div id="mobile-nav">
+      <a href="index.html">Home</a>
+      <a href="court-booking.html">Court Booking</a>
+      <a href="private-lessons.html">Private Lessons</a>
+      <a href="clinics.html">Clinics</a>
+      <a href="#">Member Login</a>
+    </div>
+  </nav>
+
+  <!-- ─── SLIM HERO ────────────────────────────────────────────── -->
+  <section id="slim-hero">
+    <h1>Book a Court</h1>
+    <hr class="slim-hero-divider">
+    <p class="hero-location">NYAC Travers Island</p>
+  </section>
+
+  <!-- ─── BOOKING WIDGET ───────────────────────────────────────── -->
+  <section id="booking-widget">
+    <div class="booking-inner">
+
+      <!-- Filter Bar -->
+      <div id="filter-bar">
+
+        <!-- Filters: Date + Start Time + Duration -->
+        <div class="filter-row">
+
+          <div class="filter-group">
+            <span class="filter-label">Date</span>
+            <div id="date-selector-wrap">
+              <button id="date-selected-pill" class="filter-pill selected" aria-expanded="false">
+                <span id="date-selected-label">Select</span>
+                <svg id="date-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="margin-left:6px; vertical-align:middle; transition: transform 0.2s ease;">
+                  <polyline points="2 4 6 8 10 4"/>
+                </svg>
+              </button>
+              <div id="date-expanded-tray" style="display:none;">
+                <!-- 14 day pills generated by JS, today is index 0 -->
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Start Time</span>
+            <div id="time-selector-wrap">
+              <button id="time-selected-pill" class="filter-pill selected" aria-expanded="false">
+                <span id="time-selected-label">Select</span>
+                <svg id="time-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="margin-left:6px; vertical-align:middle; transition: transform 0.2s ease;">
+                  <polyline points="2 4 6 8 10 4"/>
+                </svg>
+              </button>
+              <div id="time-expanded-tray" style="display:none;">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">Duration</span>
+            <div id="duration-selector-wrap">
+              <button id="duration-selected-pill" class="filter-pill selected" aria-expanded="false">
+                <span id="duration-selected-label">Select</span>
+                <svg id="duration-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="margin-left:6px; vertical-align:middle; transition: transform 0.2s ease;">
+                  <polyline points="2 4 6 8 10 4"/>
+                </svg>
+              </button>
+              <div id="duration-expanded-tray" style="display:none;">
+                <button class="filter-pill" data-duration="0.5">30 min</button>
+                <button class="filter-pill" data-duration="1">1 hr</button>
+                <button class="filter-pill" data-duration="1.5">1.5 hr</button>
+                <button class="filter-pill" data-duration="2">2 hr</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label" style="visibility:hidden">_</span>
+            <button id="clear-filters-btn" class="clear-filters-btn">Clear</button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Map + Sidebars -->
+      <div class="map-layout">
+
+        <!-- Legend Panel -->
+        <div class="legend-panel">
+          <div class="legend-section">
+            <span class="legend-heading">Legend</span>
+            <hr class="legend-divider">
+            <div class="legend-item">
+              <svg class="legend-swatch" viewBox="0 0 12 12">
+                <rect width="12" height="12" fill="rgba(34,139,34,0.18)" stroke="#228B22" stroke-width="1.5"/>
+              </svg>
+              <span class="legend-item-text">Available</span>
+            </div>
+            <div class="legend-item">
+              <svg class="legend-swatch" viewBox="0 0 12 12">
+                <rect width="12" height="12" fill="rgba(200,16,46,0.3)" stroke="#C8102E" stroke-width="1.5"/>
+              </svg>
+              <span class="legend-item-text">Unavailable</span>
+            </div>
+            <div class="legend-item">
+              <svg class="legend-swatch" viewBox="0 0 12 12">
+                <rect width="12" height="12" fill="rgba(255,140,0,0.35)" stroke="#FF8C00" stroke-width="1.5"/>
+              </svg>
+              <span class="legend-item-text">Selected</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-wrap" id="map-wrap" style="width:650px;flex-shrink:0;position:relative;">
+          <img
+            id="court-map-img"
+            src="NYAC.Website.Photos/Arial-courts-final.jpg"
+            alt="NYAC Travers Island aerial court map"
+            style="display:block;width:650px;height:auto;"
+          >
+          <svg
+            id="court-svg-overlay"
+            viewBox="0 0 1321 1172"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="xMidYMid meet"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;"
+          >
+            <!-- Pro Courts -->
+            <polygon id="court-P1" class="court-poly" data-court-id="P1" data-court-name="Court 13" data-cluster="pro"     points="354,225 434,210 469,371 387,388" />
+            <polygon id="court-P2" class="court-poly" data-court-id="P2" data-court-name="Court 14" data-cluster="pro"     points="455,206 536,190 570,352 489,369" />
+            <polygon id="court-P3" class="court-poly" data-court-id="P3" data-court-name="Court 15" data-cluster="pro"     points="555,185 636,169 670,331 589,348" />
+            <!-- North Clay -->
+            <polygon id="court-N1" class="court-poly" data-court-id="N1" data-court-name="Court 16" data-cluster="north"  points="772,103 852,87 887,249 805,266" />
+            <polygon id="court-N2" class="court-poly" data-court-id="N2" data-court-name="Court 17" data-cluster="north"  points="873,83 954,68 988,229 906,246" />
+            <polygon id="court-N3" class="court-poly" data-court-id="N3" data-court-name="Court 18" data-cluster="north"  points="970,62 1051,47 1085,209 1004,225" />
+            <!-- Central Clay -->
+            <polygon id="court-C1" class="court-poly" data-court-id="C1" data-court-name="Court 8" data-cluster="central" points="599,606 681,608 678,775 596,773" />
+            <polygon id="court-C2" class="court-poly" data-court-id="C2" data-court-name="Court 7" data-cluster="central" points="693,608 776,610 773,777 691,775" />
+            <polygon id="court-C3" class="court-poly" data-court-id="C3" data-court-name="Court 6" data-cluster="central" points="790,610 872,612 870,779 787,776" />
+            <polygon id="court-C4" class="court-poly" data-court-id="C4" data-court-name="Court 5" data-cluster="central" points="886,612 968,613 966,780 883,778" />
+            <!-- West Clay -->
+            <polygon id="court-W1" class="court-poly" data-court-id="W1" data-court-name="Court 4" data-cluster="west"    points="579,864 661,866 659,1032 576,1030" />
+            <polygon id="court-W2" class="court-poly" data-court-id="W2" data-court-name="Court 3" data-cluster="west"    points="674,866 756,867 754,1034 671,1032" />
+            <polygon id="court-W3" class="court-poly" data-court-id="W3" data-court-name="Court 2" data-cluster="west"    points="769,867 851,869 849,1036 766,1034" />
+            <polygon id="court-W4" class="court-poly" data-court-id="W4" data-court-name="Court 1" data-cluster="west"    points="865,868 947,869 945,1036 862,1034" />
+            <!-- South Clay -->
+            <polygon id="court-S1" class="court-poly" data-court-id="S1" data-court-name="Court 12" data-cluster="south"  points="71,785 153,789 146,956 63,951" />
+            <polygon id="court-S2" class="court-poly" data-court-id="S2" data-court-name="Court 11" data-cluster="south"  points="169,791 251,795 243,962 161,957" />
+            <polygon id="court-S3" class="court-poly" data-court-id="S3" data-court-name="Court 10" data-cluster="south"  points="266,796 348,801 341,967 258,963" />
+            <polygon id="court-S4" class="court-poly" data-court-id="S4" data-court-name="Court 9" data-cluster="south"  points="367,801 449,805 441,972 359,967" />
+
+            <!-- Court labels -->
+      <text class="court-label" x="411" y="299">13</text>
+      <text class="court-label" x="512" y="279">14</text>
+      <text class="court-label" x="612" y="258">15</text>
+      <text class="court-label" x="829" y="176">16</text>
+      <text class="court-label" x="930" y="157">17</text>
+      <text class="court-label" x="1028" y="136">18</text>
+      <text class="court-label" x="638" y="690">8</text>
+      <text class="court-label" x="732" y="692">7</text>
+      <text class="court-label" x="829" y="694">6</text>
+      <text class="court-label" x="925" y="696">5</text>
+      <text class="court-label" x="618" y="948">4</text>
+      <text class="court-label" x="713" y="950">3</text>
+      <text class="court-label" x="808" y="952">2</text>
+      <text class="court-label" x="904" y="953">1</text>
+      <text class="court-label" x="107" y="870">12</text>
+      <text class="court-label" x="205" y="876">11</text>
+      <text class="court-label" x="303" y="882">10</text>
+      <text class="court-label" x="404" y="887">9</text>
+          </svg>
+        </div>
+
+        <!-- Right Column: Instructions + Summary stacked -->
+        <div style="display:flex;flex-direction:column;gap:16px;flex-shrink:0;align-self:flex-start;">
+
+          <!-- Instructions Panel -->
+          <div id="instructions-panel" style="width:220px;background:var(--white);border:1px solid var(--light-gray);padding:24px;display:flex;flex-direction:column;">
+            <span class="legend-heading">How to Book</span>
+            <hr class="legend-divider">
+            <ol style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:8px;">
+              <li style="font-family:var(--font-body);font-size:13px;color:var(--dark);">Set your date, start time, and duration using the filters above.</li>
+              <li style="font-family:var(--font-body);font-size:13px;color:var(--dark);">Click an available court on the map to select it.</li>
+              <li style="font-family:var(--font-body);font-size:13px;color:var(--dark);">Review your booking summary, then confirm.</li>
+            </ol>
+          </div>
+
+          <!-- Live Summary Panel -->
+          <div id="court-info-panel">
+            <span class="legend-heading">Booking Summary</span>
+            <hr class="legend-divider">
+            <div class="summary-live-table">
+              <span class="summary-live-label">Date</span>
+              <span class="summary-live-value" id="live-date">—</span>
+              <span class="summary-live-label">Start Time</span>
+              <span class="summary-live-value" id="live-time">—</span>
+              <span class="summary-live-label">Duration</span>
+              <span class="summary-live-value" id="live-duration">—</span>
+              <span class="summary-live-label">Court</span>
+              <span class="summary-live-value" id="live-court">—</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div><!-- /.map-layout -->
+
+      <!-- Mobile Cluster Cards -->
+      <div id="mobile-cluster-cards">
+        <div class="cluster-card" data-cluster="pro" data-cluster-label="Pro Courts" data-court-count="3">
+          <div class="cluster-card-left">
+            <span class="cluster-card-name">Pro Courts</span>
+            <span class="cluster-card-sub">Blue/Green Hard Courts</span>
+          </div>
+          <div class="cluster-card-right">
+            <span class="cluster-card-count">3 courts</span>
+            <span class="cluster-card-arrow">&#8594;</span>
+          </div>
+        </div>
+        <div class="cluster-card" data-cluster="north" data-cluster-label="North Clay" data-court-count="3">
+          <div class="cluster-card-left">
+            <span class="cluster-card-name">North Clay</span>
+            <span class="cluster-card-sub">Har-Tru Clay Courts</span>
+          </div>
+          <div class="cluster-card-right">
+            <span class="cluster-card-count">3 courts</span>
+            <span class="cluster-card-arrow">&#8594;</span>
+          </div>
+        </div>
+        <div class="cluster-card" data-cluster="central" data-cluster-label="Central Clay" data-court-count="4">
+          <div class="cluster-card-left">
+            <span class="cluster-card-name">Central Clay</span>
+            <span class="cluster-card-sub">Har-Tru Clay Courts</span>
+          </div>
+          <div class="cluster-card-right">
+            <span class="cluster-card-count">4 courts</span>
+            <span class="cluster-card-arrow">&#8594;</span>
+          </div>
+        </div>
+        <div class="cluster-card" data-cluster="south" data-cluster-label="South Clay" data-court-count="4">
+          <div class="cluster-card-left">
+            <span class="cluster-card-name">South Clay</span>
+            <span class="cluster-card-sub">Har-Tru Clay Courts</span>
+          </div>
+          <div class="cluster-card-right">
+            <span class="cluster-card-count">4 courts</span>
+            <span class="cluster-card-arrow">&#8594;</span>
+          </div>
+        </div>
+        <div class="cluster-card" data-cluster="west" data-cluster-label="West Clay" data-court-count="4">
+          <div class="cluster-card-left">
+            <span class="cluster-card-name">West Clay</span>
+            <span class="cluster-card-sub">Har-Tru Clay Courts</span>
+          </div>
+          <div class="cluster-card-right">
+            <span class="cluster-card-count">4 courts</span>
+            <span class="cluster-card-arrow">&#8594;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Flow Panel -->
+      <div id="booking-panel">
+        <!-- Step 1: Summary -->
+        <div class="booking-step active" id="booking-step-1">
+          <div class="booking-step-header">
+            <button class="booking-back-btn" id="step1-back" aria-label="Back">&#8592;</button>
+            <h2 class="booking-step-title">Booking Summary</h2>
+          </div>
+          <hr class="booking-divider">
+          <div class="booking-summary-row">
+            <span class="summary-label">Court</span>
+            <span class="summary-value" id="summary-court"></span>
+            <span class="summary-label">Date</span>
+            <span class="summary-value" id="summary-date"></span>
+            <span class="summary-label">Time</span>
+            <span class="summary-value" id="summary-time"></span>
+            <span class="summary-label">Duration</span>
+            <span class="summary-value" id="summary-duration"></span>
+          </div>
+          <div class="booking-actions">
+            <button class="btn-crimson" id="step1-continue">Continue &#8594;</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Name Entry -->
+        <div class="booking-step" id="booking-step-2">
+          <div class="booking-step-header">
+            <button class="booking-back-btn" id="step2-back" aria-label="Back">&#8592;</button>
+            <h2 class="booking-step-title">Enter Your Audit # and Last Name</h2>
+          </div>
+          <hr class="booking-divider">
+          <div class="name-field-group">
+            <label class="name-field-label" for="member-id">Audit #</label>
+            <input type="text" id="member-id" class="name-field-input" autocomplete="off" placeholder="">
+          </div>
+          <div class="name-field-group">
+            <label class="name-field-label" for="last-name">Last Name</label>
+            <input type="text" id="last-name" class="name-field-input" autocomplete="family-name" placeholder="">
+          </div>
+          <div class="booking-actions">
+            <button class="btn-crimson" id="confirm-booking-btn">Confirm Booking</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div class="booking-step" id="booking-step-3">
+          <div class="booking-success">
+            <div class="success-check">&#10003;</div>
+            <h2 class="success-title">Booking Confirmed</h2>
+            <p class="success-detail" id="success-court-date"></p>
+            <p class="success-detail" id="success-time"></p>
+            <p class="success-detail" id="success-member"></p>
+            <div class="success-actions">
+              <button class="btn-crimson" id="book-another-btn">Book Another Court</button>
+              <button class="btn-light" id="close-panel-btn">Close</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /#booking-panel -->
+
+    </div><!-- /.booking-inner -->
+  </section>
+
+  <!-- ─── MOBILE BOTTOM SHEET ──────────────────────────────────── -->
+  <div id="mobile-sheet-overlay"></div>
+  <div id="mobile-bottom-sheet">
+    <div class="sheet-header">
+      <span class="sheet-cluster-name" id="sheet-cluster-name"></span>
+      <button class="sheet-close-btn" id="sheet-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="sheet-body">
+      <!-- Zoomed SVG for this cluster -->
+      <div class="sheet-svg-wrap" id="sheet-svg-wrap"></div>
+      <!-- Date strip -->
+      <div class="sheet-date-strip">
+        <span class="sheet-date-label">Select Date</span>
+        <div class="date-pills" id="sheet-date-pills"></div>
+      </div>
+      <!-- Slots -->
+      <div class="sheet-slots-area" id="sheet-slots-area">
+        <p style="font-family: var(--font-body); font-style: italic; font-size: 14px; color: var(--mid-gray);">Select a court above to view available times.</p>
+      </div>
+      <!-- Booking flow inside sheet -->
+      <div class="sheet-booking-flow" id="sheet-booking-flow" style="display:none;">
+        <!-- Step 1 -->
+        <div id="sheet-step-1">
+          <div class="booking-step-header" style="margin-bottom:16px;">
+            <button class="booking-back-btn" id="sheet-step1-back">&#8592;</button>
+            <h2 class="booking-step-title" style="font-size:20px;">Booking Summary</h2>
+          </div>
+          <hr class="booking-divider">
+          <div class="booking-summary-row" style="margin-bottom:20px;">
+            <span class="summary-label">Court</span><span class="summary-value" id="sheet-summary-court"></span>
+            <span class="summary-label">Date</span><span class="summary-value" id="sheet-summary-date"></span>
+            <span class="summary-label">Time</span><span class="summary-value" id="sheet-summary-time"></span>
+            <span class="summary-label">Duration</span><span class="summary-value" id="sheet-summary-duration"></span>
+          </div>
+          <button class="btn-crimson" id="sheet-step1-continue" style="width:100%;">Continue &#8594;</button>
+        </div>
+        <!-- Step 2 -->
+        <div id="sheet-step-2" style="display:none;">
+          <div class="booking-step-header" style="margin-bottom:16px;">
+            <button class="booking-back-btn" id="sheet-step2-back">&#8592;</button>
+            <h2 class="booking-step-title" style="font-size:20px;">Enter Your Name</h2>
+          </div>
+          <hr class="booking-divider">
+          <div class="name-field-group">
+            <label class="name-field-label" for="sheet-first-name">First Name</label>
+            <input type="text" id="sheet-first-name" class="name-field-input">
+          </div>
+          <div class="name-field-group">
+            <label class="name-field-label" for="sheet-last-name">Last Name</label>
+            <input type="text" id="sheet-last-name" class="name-field-input">
+          </div>
+          <button class="btn-crimson" id="sheet-confirm-btn" disabled style="width:100%;">Confirm Booking</button>
+        </div>
+        <!-- Step 3 -->
+        <div id="sheet-step-3" style="display:none;">
+          <div class="booking-success">
+            <div class="success-check">&#10003;</div>
+            <h2 class="success-title">Booking Confirmed</h2>
+            <p class="success-detail" id="sheet-success-court-date"></p>
+            <p class="success-detail" id="sheet-success-time"></p>
+            <p class="success-detail" id="sheet-success-member"></p>
+            <div class="success-actions" style="flex-direction:column;">
+              <button class="btn-crimson" id="sheet-book-another-btn" style="width:100%;">Book Another Court</button>
+              <button class="btn-light" id="sheet-close-panel-btn" style="width:100%; margin-top:8px;">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────── -->
+  <footer id="site-footer">
+    <div class="footer-inner">
+
+      <div class="footer-contact">
+        <span class="footer-col-heading">Contact</span>
+        <p>1 Travers Island Road</p>
+        <p>Pelham Bay, NY 10461</p>
+        <a href="tel:2127677000">(212) 767-7000</a>
+        <a href="mailto:tennis@nyac.org">tennis@nyac.org</a>
+      </div>
+
+      <div class="footer-links">
+        <span class="footer-col-heading">Quick Links</span>
+        <a href="index.html">Home</a>
+        <a href="court-booking.html">Court Booking</a>
+        <a href="private-lessons.html">Private Lessons</a>
+        <a href="clinics.html">Clinics</a>
+      </div>
+
+      <div class="footer-hours">
+        <span class="footer-col-heading">Hours of Operation</span>
+        <div class="footer-hours-row">
+          <span class="footer-hours-day">Mon &ndash; Fri</span>
+          <span class="footer-hours-time">7:00 AM &ndash; 9:00 PM</span>
+          <span class="footer-hours-day">Sat &ndash; Sun</span>
+          <span class="footer-hours-time">6:30 AM &ndash; 8:00 PM</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer-bottom">
+      &copy; 2025 New York Athletic Club &mdash; Travers Island Tennis
+    </div>
+  </footer>
+
+  <script>
+    // ─── MOCK BOOKING DATA ───────────────────────────────────────
+    // Seeded pseudo-random number generator (mulberry32)
+    function seededRandom(seed) {
+      return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    const COURT_IDS = ['P1','P2','P3','N1','N2','N3','C1','C2','C3','C4','S1','S2','S3','S4','W1','W2','W3','W4'];
+
+    const CLUSTER_LABELS = {
+      pro: 'Pro Courts',
+      north: 'North Clay',
+      central: 'Central Clay',
+      south: 'South Clay',
+      west: 'West Clay'
+    };
+
+    const COURT_CLUSTER_MAP = {
+      P1:'pro', P2:'pro', P3:'pro',
+      N1:'north', N2:'north', N3:'north',
+      C1:'central', C2:'central', C3:'central', C4:'central',
+      S1:'south', S2:'south', S3:'south', S4:'south',
+      W1:'west', W2:'west', W3:'west', W4:'west'
+    };
+
+    // Generate 14 dates starting today
+    function getDateStrings() {
+      const dates = [];
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        dates.push(formatDateKey(d));
+      }
+      return dates;
+    }
+
+    function formatDateKey(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDateDisplay(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const opts = { weekday: 'long', month: 'long', day: 'numeric' };
+      return date.toLocaleDateString('en-US', opts);
+    }
+
+    function formatDateShort(dateStr, isToday) {
+      if (isToday) return 'Today';
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+      return `${day} ${d}`;
+    }
+
+    // All 30-min slots 7:00 AM – 9:00 PM (28 slots, last start = 20:30)
+    function getAllSlots() {
+      const slots = [];
+      for (let h = 7; h <= 20; h++) {
+        slots.push(`${String(h).padStart(2,'0')}:00`);
+        if (h < 21) slots.push(`${String(h).padStart(2,'0')}:30`);
+      }
+      // Fix: 7:00 to 20:30 = 28 slots
+      // Remove 21:00 if it snuck in
+      return slots.filter(s => s <= '20:30');
+    }
+
+    const ALL_SLOTS = getAllSlots(); // ["07:00","07:30",...,"20:30"]
+
+    // Generate mock bookings (~30% of slots booked per court per day)
+    const mockBookings = {};
+    const DATE_STRINGS = getDateStrings();
+
+    COURT_IDS.forEach(courtId => {
+      mockBookings[courtId] = {};
+      DATE_STRINGS.forEach((dateStr, di) => {
+        const seed = courtId.charCodeAt(0) * 1000 + (courtId.charCodeAt(1) || 0) * 100 + di * 13;
+        const rand = seededRandom(seed);
+        const booked = [];
+        ALL_SLOTS.forEach(slot => {
+          if (rand() < 0.30) booked.push(slot);
+        });
+        mockBookings[courtId][dateStr] = booked;
+      });
+    });
+
+    // ─── AVAILABILITY LOGIC ──────────────────────────────────────
+    function slotToMinutes(slot) {
+      const [h, m] = slot.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToSlot(min) {
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+
+    function formatTime12(slot) {
+      const [h, m] = slot.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
+    // Returns array of available start-time strings for a court/date/duration
+    function getAvailableSlots(courtId, dateStr, durationHours) {
+      const booked = mockBookings[courtId][dateStr] || [];
+      const bookedMinutes = new Set(booked.map(slotToMinutes));
+      const durationMinutes = durationHours * 60;
+
+      return ALL_SLOTS.filter(slot => {
+        const startMin = slotToMinutes(slot);
+        const endMin = startMin + durationMinutes;
+        // Can't book past 21:00 (9 PM)
+        if (endMin > 21 * 60) return false;
+        // Check if any 30-min block in the duration window is booked
+        for (let t = startMin; t < endMin; t += 30) {
+          if (bookedMinutes.has(t)) return false;
+        }
+        return true;
+      });
+    }
+
+    // Given date and any duration, is the court at least partially available?
+    function isCourtAvailableOnDate(courtId, dateStr) {
+      return getAvailableSlots(courtId, dateStr, 0.5).length > 0;
+    }
+
+    // ─── STATE ───────────────────────────────────────────────────
+    const state = {
+      selectedCluster: 'all',
+      selectedDate: null,
+      selectedStartTime: null,
+      selectedFilterDuration: null,
+      selectedCourt: null,
+      selectedCourtName: null,
+      selectedTime: null,
+      selectedDuration: null,
+      bookingStep: 0,
+      // Mobile sheet
+      sheetCluster: null,
+      sheetCourt: null,
+      sheetCourtName: null,
+      sheetDate: null,
+      sheetTime: null,
+      sheetDuration: null,
+      sheetStep: 0,
+    };
+
+    // ─── SHEET DATE STRIP (mobile only) ─────────────────────────
+    function buildDateStrip(containerId, onSelect) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+      DATE_STRINGS.forEach((dateStr, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-pill';
+        btn.dataset.date = dateStr;
+        btn.textContent = formatDateShort(dateStr, i === 0);
+        btn.addEventListener('click', () => onSelect(dateStr, btn));
+        container.appendChild(btn);
+      });
+    }
+
+    function selectDatePill(containerId, dateStr) {
+      document.querySelectorAll(`#${containerId} .filter-pill`).forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.date === dateStr);
+      });
+    }
+
+    buildDateStrip('sheet-date-pills', (dateStr, btn) => {
+      state.sheetDate = dateStr;
+      selectDatePill('sheet-date-pills', dateStr);
+      if (state.sheetCourt) {
+        renderSheetSlots(state.sheetCourt, state.sheetCourtName);
+      }
+    });
+
+    // ─── DATE SELECTOR ───────────────────────────────────────────
+
+    // No date auto-selected on load
+
+    const dateTrayEl = document.getElementById('date-expanded-tray');
+    const dateSelectedLabel = document.getElementById('date-selected-label');
+    const dateChevron = document.getElementById('date-chevron');
+    const dateSelectedPill = document.getElementById('date-selected-pill');
+
+    // Build tray pills
+    DATE_STRINGS.forEach((dateStr, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'date-tray-pill';
+      btn.dataset.date = dateStr;
+
+      const d = new Date(dateStr + 'T00:00:00');
+      const dayName = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayNum = d.getDate();
+      const monthAbbr = d.toLocaleDateString('en-US', { month: 'short' });
+
+      btn.innerHTML = `<span class="date-tray-pill-day">${dayName}</span><span class="date-tray-pill-num">${dayNum}</span><span class="date-tray-pill-day">${monthAbbr}</span>`;
+
+      btn.addEventListener('click', () => {
+        state.selectedDate = dateStr;
+        dateTrayEl.querySelectorAll('.date-tray-pill').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        dateSelectedLabel.textContent = i === 0 ? 'Today' : `${dayName} ${dayNum} ${monthAbbr}`;
+        closeDateTray();
+        updatePolygonStates();
+        applyTimeFilter();
+        updateCourtLockState();
+        updateLiveSummary();
+      });
+
+      dateTrayEl.appendChild(btn);
+    });
+
+    function openDateTray() {
+      dateTrayEl.style.display = 'flex';
+      dateChevron.classList.add('open');
+      dateSelectedPill.setAttribute('aria-expanded', 'true');
+    }
+    function closeDateTray() {
+      dateTrayEl.style.display = 'none';
+      dateChevron.classList.remove('open');
+      dateSelectedPill.setAttribute('aria-expanded', 'false');
+    }
+
+    dateSelectedPill.addEventListener('click', () => {
+      dateTrayEl.style.display === 'none' ? openDateTray() : closeDateTray();
+    });
+
+    // Close trays on outside click
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('date-selector-wrap').contains(e.target)) closeDateTray();
+      if (!document.getElementById('time-selector-wrap').contains(e.target)) closeTimeTray();
+      if (!document.getElementById('duration-selector-wrap').contains(e.target)) closeDurationTray();
+    });
+
+    // ─── CLEAR FILTERS ───────────────────────────────────────────
+    document.getElementById('clear-filters-btn').addEventListener('click', () => {
+      resetWidget();
+    });
+
+    // Run initial polygon state with today auto-selected
+    updatePolygonStates();
+    updateCourtLockState();
+    updateLiveSummary();
+
+    // ─── CLUSTER FILTER ──────────────────────────────────────────
+    // (same behavior as before — no changes needed to the cluster pill listener block)
+
+    document.querySelectorAll('#cluster-pills .filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.selectedCluster = btn.dataset.cluster;
+        document.querySelectorAll('#cluster-pills .filter-pill').forEach(b => {
+          b.classList.toggle('selected', b === btn);
+        });
+        applyClusterDim();
+      });
+    });
+
+    // ─── TIME FILTER ─────────────────────────────────────────────
+
+    const timeSlots = [];
+    for (let h = 7; h <= 20; h++) {
+      timeSlots.push(`${String(h).padStart(2,'0')}:00`);
+      if (h < 20) timeSlots.push(`${String(h).padStart(2,'0')}:30`);
+    }
+    timeSlots.push('20:30');
+
+    const timeTrayEl = document.getElementById('time-expanded-tray');
+    const timeSelectedLabel = document.getElementById('time-selected-label');
+    const timeChevron = document.getElementById('time-chevron');
+    const timeSelectedPill = document.getElementById('time-selected-pill');
+
+    function openTimeTray() {
+      timeTrayEl.style.display = 'flex';
+      timeChevron.classList.add('open');
+      timeSelectedPill.setAttribute('aria-expanded', 'true');
+    }
+    function closeTimeTray() {
+      timeTrayEl.style.display = 'none';
+      timeChevron.classList.remove('open');
+      timeSelectedPill.setAttribute('aria-expanded', 'false');
+    }
+    timeSelectedPill.addEventListener('click', () => {
+      timeTrayEl.style.display === 'none' ? openTimeTray() : closeTimeTray();
+    });
+
+    timeSlots.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-pill';
+      btn.dataset.time = t;
+      btn.textContent = formatTime12(t);
+      btn.addEventListener('click', () => { selectTimePill(t); closeTimeTray(); });
+      timeTrayEl.appendChild(btn);
+    });
+
+    function selectTimePill(t) {
+      state.selectedStartTime = t;
+      timeTrayEl.querySelectorAll('.filter-pill').forEach(b => {
+        b.classList.toggle('selected', b.dataset.time === t);
+      });
+      timeSelectedLabel.textContent = t ? formatTime12(t) : 'Select';
+      applyTimeFilter();
+      updatePolygonStates();
+      updateCourtLockState();
+      updateHoverState();
+      updateLiveSummary();
+    }
+
+    // ─── DURATION FILTER ─────────────────────────────────────────
+
+    const durationTrayEl = document.getElementById('duration-expanded-tray');
+    const durationSelectedLabel = document.getElementById('duration-selected-label');
+    const durationChevron = document.getElementById('duration-chevron');
+    const durationSelectedPill = document.getElementById('duration-selected-pill');
+
+    function openDurationTray() {
+      durationTrayEl.style.display = 'flex';
+      durationChevron.classList.add('open');
+      durationSelectedPill.setAttribute('aria-expanded', 'true');
+    }
+    function closeDurationTray() {
+      durationTrayEl.style.display = 'none';
+      durationChevron.classList.remove('open');
+      durationSelectedPill.setAttribute('aria-expanded', 'false');
+    }
+    function resetDurationFilter() {
+      state.selectedFilterDuration = null;
+      document.querySelectorAll('#duration-expanded-tray .filter-pill').forEach(b => b.classList.remove('selected'));
+      document.getElementById('duration-selected-label').textContent = 'Select';
+      closeDurationTray();
+    }
+    durationSelectedPill.addEventListener('click', () => {
+      durationTrayEl.style.display === 'none' ? openDurationTray() : closeDurationTray();
+    });
+
+    durationTrayEl.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.dataset.duration;
+        if (val === 'any') {
+          resetDurationFilter();
+        } else {
+          state.selectedFilterDuration = parseFloat(val);
+          durationTrayEl.querySelectorAll('.filter-pill').forEach(b => {
+            b.classList.toggle('selected', b === btn);
+          });
+          document.getElementById('duration-selected-label').textContent = btn.textContent;
+          closeDurationTray();
+        }
+        applyTimeFilter();
+        updatePolygonStates();
+        updateCourtLockState();
+        updateHoverState();
+        updateLiveSummary();
+      });
+    });
+
+    // ─── applyTimeFilter ─────────────────────────────────────────
+    // Dims court buttons that have no availability matching current time+duration filter.
+    // Only runs if a date is selected. Does not affect selected/unavailable states.
+
+    function applyTimeFilter() {
+      const bothFilters = state.selectedStartTime !== null && state.selectedFilterDuration !== null;
+      if (!state.selectedDate || !bothFilters) {
+        document.querySelectorAll('.court-poly').forEach(el => el.classList.remove('time-filtered'));
+        return;
+      }
+      const dur = state.selectedFilterDuration;
+
+      document.querySelectorAll('.court-poly').forEach(el => {
+        const courtId = el.dataset.courtId;
+        if (!courtId) return;
+        const available = getAvailableSlots(courtId, state.selectedDate, dur);
+        const passes = available.includes(state.selectedStartTime);
+        el.classList.toggle('time-filtered', !passes);
+      });
+    }
+
+    function applyClusterDim() {
+      document.querySelectorAll('.court-poly').forEach(poly => {
+        const cluster = poly.dataset.cluster;
+        if (state.selectedCluster === 'all' || cluster === state.selectedCluster) {
+          poly.classList.remove('dimmed');
+        } else {
+          poly.classList.add('dimmed');
+        }
+      });
+    }
+
+    // ─── POLYGON AVAILABILITY STATES ────────────────────────────
+    function updatePolygonStates() {
+      document.querySelectorAll('.court-poly').forEach(poly => {
+        const courtId = poly.dataset.courtId;
+        poly.classList.remove('available', 'unavailable');
+        if (!state.selectedDate) return;
+
+        const dur = state.selectedFilterDuration || 0.5;
+        const hasTime = state.selectedStartTime !== null;
+
+        let isAvailable;
+        if (hasTime) {
+          // Time is set — check if that exact start time is free for the duration
+          const slots = getAvailableSlots(courtId, state.selectedDate, dur);
+          isAvailable = slots.includes(state.selectedStartTime);
+        } else if (state.selectedFilterDuration) {
+          // Duration set but no specific time — any slot at that duration?
+          isAvailable = getAvailableSlots(courtId, state.selectedDate, state.selectedFilterDuration).length > 0;
+        } else {
+          // Just date — any 30-min slot free?
+          isAvailable = isCourtAvailableOnDate(courtId, state.selectedDate);
+        }
+
+        poly.classList.add(isAvailable ? 'available' : 'unavailable');
+      });
+    }
+
+    // ─── INFO PANEL ──────────────────────────────────────────────
+    function filtersComplete() {
+      return state.selectedDate && state.selectedStartTime !== null && state.selectedFilterDuration !== null;
+    }
+
+    function updateCourtLockState() {
+      const overlay = document.getElementById('court-svg-overlay');
+      if (overlay) overlay.classList.toggle('filters-incomplete', !filtersComplete());
+    }
+
+    function updateHoverState() {
+      const hasFilter = state.selectedStartTime !== null && state.selectedFilterDuration !== null;
+      const overlay = document.getElementById('court-svg-overlay');
+      if (overlay) overlay.classList.toggle('filters-active', hasFilter);
+    }
+
+    function updateLiveSummary() {
+      const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (val) {
+          el.textContent = val;
+          el.classList.remove('empty');
+        } else {
+          el.textContent = '—';
+          el.classList.add('empty');
+        }
+      };
+
+      set('live-date', state.selectedDate ? formatDateDisplay(state.selectedDate) : null);
+      set('live-time', state.selectedStartTime !== null ? formatTime12(state.selectedStartTime) : null);
+
+      const durLabels = { 0.5: '30 Minutes', 1: '1 Hour', 1.5: '1.5 Hours', 2: '2 Hours' };
+      set('live-duration', state.selectedFilterDuration ? durLabels[state.selectedFilterDuration] : null);
+      set('live-court', state.selectedCourtName || null);
+    }
+
+    // ─── COURT POLYGON CLICK ─────────────────────────────────────
+    document.querySelectorAll('.court-poly').forEach(poly => {
+      poly.addEventListener('click', () => {
+        const courtId = poly.dataset.courtId;
+        const courtName = poly.dataset.courtName;
+        const cluster = poly.dataset.cluster;
+
+        // Toggle: clicking the already-selected court deselects it
+        if (state.selectedCourt === courtId) {
+          cancelCourtSelection();
+          return;
+        }
+
+        // Deselect previous, dim all others
+        document.querySelectorAll('.court-poly').forEach(p => {
+          p.classList.remove('selected', 'court-selected-dim');
+        });
+        poly.classList.remove('available', 'unavailable', 'time-filtered');
+        poly.classList.add('selected');
+        document.querySelectorAll('.court-poly').forEach(p => {
+          if (p !== poly) p.classList.add('court-selected-dim');
+        });
+
+        state.selectedCourt = courtId;
+        state.selectedCourtName = courtName;
+        state.bookingStep = 0;
+        state.selectedTime = state.selectedStartTime;
+        state.selectedDuration = state.selectedFilterDuration;
+
+        updateLiveSummary();
+        hideBookingPanel();
+        showInlinePopup(poly);
+      });
+    });
+
+
+    // ─── INLINE COURT POPUP ───────────────────────────────────────
+    function removeInlinePopup() {
+      document.querySelectorAll('.court-inline-popup').forEach(p => p.remove());
+    }
+
+    function cancelCourtSelection() {
+      document.querySelectorAll('.court-poly').forEach(p => p.classList.remove('selected', 'court-selected-dim'));
+      state.selectedCourt = null;
+      state.selectedCourtName = null;
+      state.selectedTime = null;
+      state.selectedDuration = null;
+      state.bookingStep = 0;
+      removeInlinePopup();
+      hideBookingPanel();
+      updateLiveSummary();
+      updatePolygonStates();
+      applyTimeFilter();
+    }
+
+    function showInlinePopup(btnEl) {
+      removeInlinePopup();
+      const popup = document.createElement('div');
+      popup.className = 'court-inline-popup';
+      popup.innerHTML = `<button class="pop-confirm">Confirm</button><button class="pop-cancel">Cancel</button>`;
+
+      const mapWrap = document.getElementById('map-wrap');
+      mapWrap.appendChild(popup);
+
+      const polyRect = btnEl.getBoundingClientRect();
+      const mapRect = mapWrap.getBoundingClientRect();
+      popup.style.left = (polyRect.left - mapRect.left + polyRect.width / 2) + 'px';
+      popup.style.top = (polyRect.bottom - mapRect.top + 6) + 'px';
+
+      popup.querySelector('.pop-confirm').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeInlinePopup();
+        showBookingStep(1);
+        populateStep1();
+        document.getElementById('booking-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      popup.querySelector('.pop-cancel').addEventListener('click', (e) => {
+        e.stopPropagation();
+        cancelCourtSelection();
+      });
+    }
+
+    // ─── BOOKING PANEL ───────────────────────────────────────────
+    function tryShowBookingStep1() {
+      if (state.selectedCourt && state.selectedTime && state.selectedDuration) {
+        showBookingStep(1);
+        populateStep1();
+        document.getElementById('booking-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function showBookingStep(step) {
+      state.bookingStep = step;
+      const panel = document.getElementById('booking-panel');
+      panel.classList.add('visible');
+      document.querySelectorAll('.booking-step').forEach(s => s.classList.remove('active'));
+      document.getElementById(`booking-step-${step}`).classList.add('active');
+    }
+
+    function hideBookingPanel() {
+      const panel = document.getElementById('booking-panel');
+      panel.classList.remove('visible');
+      document.querySelectorAll('.booking-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('booking-step-1').classList.add('active');
+    }
+
+    function populateStep1() {
+      const dateToUse = state.selectedDate || DATE_STRINGS[0];
+
+      document.getElementById('summary-court').textContent = state.selectedCourtName;
+      document.getElementById('summary-date').textContent = formatDateDisplay(dateToUse);
+
+      if (state.selectedTime && state.selectedDuration) {
+        const endMin = slotToMinutes(state.selectedTime) + state.selectedDuration * 60;
+        const endSlot = minutesToSlot(endMin);
+        const durationLabel = state.selectedDuration === 0.5 ? '30 Minutes'
+          : state.selectedDuration === 1 ? '1 Hour'
+          : state.selectedDuration === 1.5 ? '1.5 Hours'
+          : '2 Hours';
+        document.getElementById('summary-time').textContent = `${formatTime12(state.selectedTime)} – ${formatTime12(endSlot)}`;
+        document.getElementById('summary-duration').textContent = durationLabel;
+      } else {
+        document.getElementById('summary-time').textContent = '—';
+        document.getElementById('summary-duration').textContent = '—';
+      }
+    }
+
+    // Step 1: Continue
+    document.getElementById('step1-continue').addEventListener('click', () => {
+      showBookingStep(2);
+      document.getElementById('member-id').value = '';
+      document.getElementById('last-name').value = '';
+      ['member-id','last-name'].forEach(id => {
+        document.getElementById(id).style.borderBottomColor = '';
+      });
+    });
+
+    // Step 1: Back → reset to map
+    document.getElementById('step1-back').addEventListener('click', () => {
+      cancelCourtSelection();
+      document.querySelectorAll('#duration-pills .duration-pill').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
+    });
+
+    // Step 2: Back → Step 1
+    document.getElementById('step2-back').addEventListener('click', () => {
+      showBookingStep(1);
+    });
+
+    // Step 2: Clear red highlight on input
+    ['member-id','last-name'].forEach(id => {
+      document.getElementById(id).addEventListener('input', function() {
+        if (this.value.trim().length >= 1) {
+          this.style.borderBottomColor = '';
+          const tooltip = this.parentElement.querySelector('.field-required-tip');
+          if (tooltip) tooltip.remove();
+        }
+      });
+    });
+
+    // Step 2: Confirm
+    document.getElementById('confirm-booking-btn').addEventListener('click', () => {
+      const mid = document.getElementById('member-id').value.trim();
+      const ln  = document.getElementById('last-name').value.trim();
+
+      // Validate — highlight missing fields
+      let hasError = false;
+      [['member-id', mid], ['last-name', ln]].forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        const existing = el.parentElement.querySelector('.field-required-tip');
+        if (!val) {
+          hasError = true;
+          el.style.borderBottomColor = 'var(--crimson)';
+          if (!existing) {
+            const tip = document.createElement('span');
+            tip.className = 'field-required-tip';
+            tip.textContent = 'Required';
+            tip.style.cssText = 'font-family:var(--font-ui);font-size:10px;color:var(--crimson);letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;display:block;';
+            el.parentElement.appendChild(tip);
+          }
+        } else {
+          el.style.borderBottomColor = '';
+          if (existing) existing.remove();
+        }
+      });
+      if (hasError) return;
+
+      const dateToUse = state.selectedDate || DATE_STRINGS[0];
+      const endMin = slotToMinutes(state.selectedTime) + state.selectedDuration * 60;
+      const endSlot = minutesToSlot(endMin);
+
+      document.getElementById('success-court-date').textContent =
+        `${state.selectedCourtName} · ${formatDateDisplay(dateToUse)}`;
+      document.getElementById('success-time').textContent =
+        `${formatTime12(state.selectedTime)} – ${formatTime12(endSlot)}`;
+      document.getElementById('success-member').textContent = `${ln} · ${mid}`;
+
+      showBookingStep(3);
+    });
+
+    // Step 3: Book Another
+    document.getElementById('book-another-btn').addEventListener('click', () => {
+      resetWidget();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Step 3: Close
+    document.getElementById('close-panel-btn').addEventListener('click', () => {
+      resetWidget();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    function resetWidget() {
+      state.selectedCluster = 'all';
+      state.selectedDate = null;
+      state.selectedCourt = null;
+      state.selectedCourtName = null;
+      state.selectedTime = null;
+      state.selectedDuration = null;
+      state.selectedFilterDuration = null;
+      state.bookingStep = 0;
+
+      // Reset cluster pills
+      document.querySelectorAll('#cluster-pills .filter-pill').forEach(b => {
+        b.classList.toggle('selected', b.dataset.cluster === 'all');
+      });
+
+      // Reset date selector to today
+      dateTrayEl.querySelectorAll('.date-tray-pill').forEach(b => b.classList.remove('selected'));
+      dateSelectedLabel.textContent = 'Select';
+      closeDateTray();
+
+      // Reset start time to none
+      state.selectedStartTime = null;
+      timeTrayEl.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('selected'));
+      timeSelectedLabel.textContent = 'Select';
+      closeTimeTray();
+
+      // Reset duration to Any
+      resetDurationFilter();
+
+      // Reset polygons
+      document.querySelectorAll('.court-poly').forEach(p => {
+        p.classList.remove('selected', 'available', 'unavailable', 'dimmed', 'court-selected-dim');
+      });
+
+      // Clear booking panel summary fields
+      ['summary-court','summary-date','summary-time','summary-duration'].forEach(id => {
+        document.getElementById(id).textContent = '';
+      });
+
+      // Clear booking form fields and any validation state
+      document.getElementById('member-id').value = '';
+      document.getElementById('last-name').value = '';
+      ['member-id','last-name'].forEach(id => {
+        const el = document.getElementById(id);
+        el.style.borderBottomColor = '';
+        const tip = el.parentElement.querySelector('.field-required-tip');
+        if (tip) tip.remove();
+      });
+
+      removeInlinePopup();
+      applyClusterDim();
+      applyTimeFilter();
+      updatePolygonStates();
+      updateCourtLockState();
+      updateHoverState();
+      updateLiveSummary();
+      hideBookingPanel();
+    }
+
+    // ─── MOBILE BOTTOM SHEET ─────────────────────────────────────
+    const CLUSTER_COURTS = {
+      pro: ['P1','P2','P3'],
+      north: ['N1','N2','N3'],
+      central: ['C1','C2','C3','C4'],
+      south: ['S1','S2','S3','S4'],
+      west: ['W1','W2','W3','W4'],
+    };
+
+    // viewBox crops for each cluster (x, y, w, h) to fit within 1456×816
+    const CLUSTER_VIEWBOXES = {
+      pro:     '490 80 310 260',
+      north:   '800 20 340 220',
+      central: '740 400 400 220',
+      south:   '740 570 400 230',
+      west:    '350 560 420 230',
+    };
+
+    function openSheet(clusterKey) {
+      state.sheetCluster = clusterKey;
+      state.sheetCourt = null;
+      state.sheetCourtName = null;
+      state.sheetDate = null;
+      state.sheetTime = null;
+      state.sheetDuration = null;
+      state.sheetStep = 0;
+
+      document.getElementById('sheet-cluster-name').textContent = CLUSTER_LABELS[clusterKey];
+
+      // Build zoomed SVG
+      const svgWrap = document.getElementById('sheet-svg-wrap');
+      const vb = CLUSTER_VIEWBOXES[clusterKey];
+      const courts = CLUSTER_COURTS[clusterKey];
+
+      svgWrap.innerHTML = `
+        <svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;background:var(--off-white);">
+          ${courts.map(cid => {
+            const orig = document.getElementById(`court-${cid}`);
+            if (!orig) return '';
+            return `<polygon
+              id="sheet-poly-${cid}"
+              data-court-id="${cid}"
+              data-court-name="${orig.dataset.courtName}"
+              data-cluster="${clusterKey}"
+              points="${orig.getAttribute('points')}"
+              class="court-poly"
+              style="cursor:pointer;"
+            />`;
+          }).join('')}
+        </svg>`;
+
+      // Attach polygon click in sheet
+      courts.forEach(cid => {
+        const poly = svgWrap.querySelector(`#sheet-poly-${cid}`);
+        if (!poly) return;
+        poly.addEventListener('click', () => {
+          state.sheetCourt = cid;
+          state.sheetCourtName = poly.dataset.courtName;
+          state.sheetTime = null;
+          state.sheetDuration = null;
+
+          svgWrap.querySelectorAll('.court-poly').forEach(p => p.classList.remove('selected'));
+          poly.classList.add('selected');
+
+          renderSheetSlots(cid, poly.dataset.courtName);
+        });
+      });
+
+      // Reset date strip
+      selectDatePill('sheet-date-pills', null);
+      document.getElementById('sheet-slots-area').innerHTML =
+        '<p style="font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--mid-gray);">Select a court above to view available times.</p>';
+      document.getElementById('sheet-booking-flow').style.display = 'none';
+      document.getElementById('sheet-step-1').style.display = '';
+      document.getElementById('sheet-step-2').style.display = 'none';
+      document.getElementById('sheet-step-3').style.display = 'none';
+
+      // Show sheet
+      document.getElementById('mobile-bottom-sheet').classList.add('open');
+      document.getElementById('mobile-sheet-overlay').classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSheet() {
+      document.getElementById('mobile-bottom-sheet').classList.remove('open');
+      document.getElementById('mobile-sheet-overlay').classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('sheet-close-btn').addEventListener('click', closeSheet);
+    document.getElementById('mobile-sheet-overlay').addEventListener('click', closeSheet);
+
+    document.querySelectorAll('.cluster-card').forEach(card => {
+      card.addEventListener('click', () => {
+        openSheet(card.dataset.cluster);
+      });
+    });
+
+    function renderSheetSlots(courtId, courtName) {
+      const dateToUse = state.sheetDate || DATE_STRINGS[0];
+      const dur = state.sheetDuration || 1;
+      const slots = getAvailableSlots(courtId, dateToUse, dur);
+
+      const area = document.getElementById('sheet-slots-area');
+      area.innerHTML = '';
+
+      const label = document.createElement('span');
+      label.className = 'sheet-slots-label';
+      label.textContent = `${courtName} — Available Times`;
+      area.appendChild(label);
+
+      if (!state.sheetDate) {
+        const msg = document.createElement('p');
+        msg.style.cssText = 'font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--mid-gray);margin-bottom:12px;';
+        msg.textContent = 'Showing today\'s availability. Select a date above to filter.';
+        area.appendChild(msg);
+      }
+
+      // Duration pills
+      const durLabel = document.createElement('span');
+      durLabel.className = 'duration-label';
+      durLabel.style.marginTop = '12px';
+      durLabel.textContent = 'Duration';
+      area.appendChild(durLabel);
+
+      const durPills = document.createElement('div');
+      durPills.className = 'duration-pills';
+      durPills.style.marginBottom = '12px';
+      [['0.5','30m'],['1','1 hr'],['1.5','1.5 hr'],['2','2 hr']].forEach(([val, lbl]) => {
+        const btn = document.createElement('button');
+        btn.className = 'duration-pill' + (String(state.sheetDuration) === val ? ' selected' : '');
+        btn.dataset.duration = val;
+        btn.textContent = lbl;
+        btn.addEventListener('click', () => {
+          state.sheetDuration = parseFloat(val);
+          durPills.querySelectorAll('.duration-pill').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          renderSheetSlots(courtId, courtName);
+        });
+        durPills.appendChild(btn);
+      });
+      area.appendChild(durPills);
+
+      const slotsLabel = document.createElement('span');
+      slotsLabel.className = 'sheet-slots-label';
+      slotsLabel.textContent = 'Select a Time';
+      area.appendChild(slotsLabel);
+
+      if (slots.length === 0) {
+        const msg = document.createElement('p');
+        msg.style.cssText = 'font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--mid-gray);';
+        msg.textContent = 'No available times for this selection.';
+        area.appendChild(msg);
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'sheet-slots-grid';
+      slots.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.className = 'time-slot-btn' + (state.sheetTime === slot ? ' selected' : '');
+        btn.textContent = formatTime12(slot);
+        btn.dataset.slot = slot;
+        btn.addEventListener('click', () => {
+          state.sheetTime = slot;
+          grid.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          tryShowSheetBookingStep1();
+        });
+        grid.appendChild(btn);
+      });
+      area.appendChild(grid);
+    }
+
+    function tryShowSheetBookingStep1() {
+      if (state.sheetCourt && state.sheetTime && state.sheetDuration) {
+        const dateToUse = state.sheetDate || DATE_STRINGS[0];
+        const endMin = slotToMinutes(state.sheetTime) + state.sheetDuration * 60;
+        const endSlot = minutesToSlot(endMin);
+        const durationLabel = state.sheetDuration === 0.5 ? '30 Minutes'
+          : state.sheetDuration === 1 ? '1 Hour'
+          : state.sheetDuration === 1.5 ? '1.5 Hours'
+          : '2 Hours';
+
+        document.getElementById('sheet-summary-court').textContent = state.sheetCourtName;
+        document.getElementById('sheet-summary-date').textContent = formatDateDisplay(dateToUse);
+        document.getElementById('sheet-summary-time').textContent = `${formatTime12(state.sheetTime)} – ${formatTime12(endSlot)}`;
+        document.getElementById('sheet-summary-duration').textContent = durationLabel;
+
+        document.getElementById('sheet-booking-flow').style.display = '';
+        document.getElementById('sheet-step-1').style.display = '';
+        document.getElementById('sheet-step-2').style.display = 'none';
+        document.getElementById('sheet-step-3').style.display = 'none';
+      }
+    }
+
+    document.getElementById('sheet-step1-back').addEventListener('click', () => {
+      state.sheetTime = null;
+      state.sheetDuration = null;
+      document.getElementById('sheet-booking-flow').style.display = 'none';
+    });
+
+    document.getElementById('sheet-step1-continue').addEventListener('click', () => {
+      document.getElementById('sheet-first-name').value = '';
+      document.getElementById('sheet-last-name').value = '';
+      document.getElementById('sheet-confirm-btn').disabled = true;
+      document.getElementById('sheet-step-1').style.display = 'none';
+      document.getElementById('sheet-step-2').style.display = '';
+    });
+
+    document.getElementById('sheet-step2-back').addEventListener('click', () => {
+      document.getElementById('sheet-step-2').style.display = 'none';
+      document.getElementById('sheet-step-1').style.display = '';
+    });
+
+    function validateSheetNames() {
+      const fn = document.getElementById('sheet-first-name').value.trim();
+      const ln = document.getElementById('sheet-last-name').value.trim();
+      document.getElementById('sheet-confirm-btn').disabled = !(fn.length >= 2 && ln.length >= 2);
+    }
+    document.getElementById('sheet-first-name').addEventListener('input', validateSheetNames);
+    document.getElementById('sheet-last-name').addEventListener('input', validateSheetNames);
+
+    document.getElementById('sheet-confirm-btn').addEventListener('click', () => {
+      const fn = document.getElementById('sheet-first-name').value.trim();
+      const ln = document.getElementById('sheet-last-name').value.trim();
+      const dateToUse = state.sheetDate || DATE_STRINGS[0];
+      const endMin = slotToMinutes(state.sheetTime) + state.sheetDuration * 60;
+      const endSlot = minutesToSlot(endMin);
+
+      document.getElementById('sheet-success-court-date').textContent =
+        `${state.sheetCourtName} · ${formatDateDisplay(dateToUse)}`;
+      document.getElementById('sheet-success-time').textContent =
+        `${formatTime12(state.sheetTime)} – ${formatTime12(endSlot)}`;
+      document.getElementById('sheet-success-member').textContent = `${fn} ${ln}`;
+
+      document.getElementById('sheet-step-2').style.display = 'none';
+      document.getElementById('sheet-step-3').style.display = '';
+    });
+
+    document.getElementById('sheet-book-another-btn').addEventListener('click', () => {
+      closeSheet();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    document.getElementById('sheet-close-panel-btn').addEventListener('click', () => {
+      closeSheet();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ─── NAV & UTILITY SCRIPTS (copied from homepage) ────────────
+    // Nav shadow on scroll
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('main-nav');
+      if (nav) nav.classList.toggle('nav-scrolled', window.scrollY > 10);
+    });
+
+    // Mobile hamburger toggle
+    const hamburger = document.getElementById('hamburger-btn');
+    const mobileNav = document.getElementById('mobile-nav');
+    if (hamburger && mobileNav) {
+      hamburger.addEventListener('click', () => {
+        const open = mobileNav.style.display === 'block';
+        mobileNav.style.display = open ? 'none' : 'block';
+      });
+    }
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', e => {
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+      });
+    });
+
+    // Fade-up on scroll (IntersectionObserver)
+    const fadeEls = document.querySelectorAll('.fade-up');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    fadeEls.forEach(el => observer.observe(el));
+
+  </script>
+</body>
+</html>
