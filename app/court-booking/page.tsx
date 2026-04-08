@@ -203,6 +203,14 @@ export default function CourtBookingPage() {
     if (selectedDate) loadCourts(selectedDate);
   }, [selectedDate, loadCourts]);
 
+  // Clear selected time if it's now in the past (e.g. user picked today + an early slot)
+  useEffect(() => {
+    if (!selectedTime || selectedDate !== DATE_STRINGS[0]) return;
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    if (slotToMinutes(selectedTime) <= nowMinutes) setSelectedTime(null);
+  }, [selectedDate, selectedTime]);
+
   /* ─── Close trays on outside click ─────────────────────────── */
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -686,7 +694,13 @@ export default function CourtBookingPage() {
                   </button>
                   {timeOpen && (
                     <div className="expanded-tray">
-                      {ALL_TIME_SLOTS.map(slot => (
+                      {(selectedDate === DATE_STRINGS[0]
+                        ? ALL_TIME_SLOTS.filter(slot => {
+                            const now = new Date();
+                            return slotToMinutes(slot) > now.getHours() * 60 + now.getMinutes();
+                          })
+                        : ALL_TIME_SLOTS
+                      ).map(slot => (
                         <button key={slot} className={`tray-pill${selectedTime === slot ? ' selected' : ''}`} onClick={() => { setSelectedTime(slot); setTimeOpen(false); }}>
                           {formatTime12(slot)}
                         </button>

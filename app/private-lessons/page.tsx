@@ -368,18 +368,25 @@ export default function PrivateLessonsPage() {
                 {coaches.map(c => {
                   if (!hasDate) return <td key={c.id} className="pl-slot-cell pl-taken" />;
                   const taken = isSlotTaken(c, selectedDateISO!, slot);
+                  const isPast = (() => {
+                    const now = new Date();
+                    const todayISO = dateISO(now);
+                    if (selectedDateISO !== todayISO) return false;
+                    const [sh] = slot.split(':').map(Number);
+                    return sh <= now.getHours();
+                  })();
                   const isSelected = dateSelectedCoachId === c.id && dateSelectedSlot === slot;
                   const isPopup = popupCell?.coachId === c.id && popupCell?.dateISO === selectedDateISO && popupCell?.slot === slot;
                   let cls = 'pl-slot-cell';
                   if (isSelected || isPopup) cls += ' pl-selected';
-                  else if (taken) cls += ' pl-taken';
+                  else if (taken || isPast) cls += ' pl-taken';
                   else cls += ' pl-avail';
 
                   return (
                     <td
                       key={c.id}
                       className={cls}
-                      onClick={taken ? undefined : () => handleSlotClick(c.id, selectedDateISO!, slot)}
+                      onClick={taken || isPast ? undefined : () => handleSlotClick(c.id, selectedDateISO!, slot)}
                     >
                       {isPopup && !taken && (
                         <div className="pl-cell-popup" onClick={e => e.stopPropagation()}>
