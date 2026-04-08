@@ -109,6 +109,8 @@ export default function PrivateLessonsPage() {
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [lessonsTab, setLessonsTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   /* Saved credentials for booking POST */
   const credsRef = useRef<{ auditNumber: string; lastName: string }>({ auditNumber: '', lastName: '' });
@@ -335,6 +337,26 @@ export default function PrivateLessonsPage() {
     } finally {
       setBookingLoading(false);
     }
+  }
+
+  /* ─── Cancel Lesson ─────────────────────────────────────────── */
+  async function handleCancelLesson(lessonId: string) {
+    setCancelLoading(true);
+    try {
+      const res = await fetch(`/api/lessons/${lessonId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audit_number: credsRef.current.auditNumber,
+          last_name: credsRef.current.lastName,
+        }),
+      });
+      if (res.ok) {
+        setUpcomingLessons(prev => prev.filter(l => l.id !== lessonId));
+        setCancellingId(null);
+      }
+    } catch { /* silent */ }
+    setCancelLoading(false);
   }
 
   /* ─── Date grid builder ──────────────────────────────────────── */
@@ -652,7 +674,12 @@ export default function PrivateLessonsPage() {
         .pl-lessons-tab { font-family: var(--font-ui); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid-gray); background: none; border: none; border-bottom: 2px solid transparent; padding: 12px 24px 12px 0; cursor: pointer; margin-right: 24px; transition: color 0.2s, border-color 0.2s; }
         .pl-lessons-tab:hover { color: var(--dark); }
         .pl-tab-active { color: var(--crimson); border-bottom-color: var(--crimson) !important; }
-        .pl-lesson-row { display: grid; grid-template-columns: 140px 1fr 130px 100px; align-items: center; gap: 12px 24px; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
+        .pl-lesson-row { display: grid; grid-template-columns: 140px 1fr 130px 100px auto; align-items: center; gap: 12px 24px; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
+        .pl-cancel-btn { font-family: var(--font-ui); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); background: none; border: none; cursor: pointer; padding: 0; transition: color 0.2s; white-space: nowrap; }
+        .pl-cancel-btn:hover { color: var(--crimson); }
+        .pl-cancel-confirm { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .pl-cancel-yes { font-family: var(--font-ui); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--crimson); background: none; border: none; cursor: pointer; padding: 0; }
+        .pl-cancel-no { font-family: var(--font-ui); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); background: none; border: none; cursor: pointer; padding: 0; }
         .pl-lesson-row:first-child { border-top: 1px solid var(--light-gray); }
         .pl-lesson-row-date { font-family: var(--font-body); font-size: 14px; color: var(--dark); }
         .pl-lesson-row-coach { font-family: var(--font-body); font-size: 14px; color: var(--dark); }
@@ -868,6 +895,16 @@ export default function PrivateLessonsPage() {
                     <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
                     <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
                     <span className={`pl-lesson-row-status pl-lesson-status-upcoming`}>{l.status === 'pending_pickup' ? 'Pending' : 'Confirmed'}</span>
+                    {cancellingId === l.id ? (
+                      <div className="pl-cancel-confirm">
+                        <button className="pl-cancel-yes" disabled={cancelLoading} onClick={() => handleCancelLesson(l.id)}>
+                          {cancelLoading ? '…' : 'Yes, cancel'}
+                        </button>
+                        <button className="pl-cancel-no" onClick={() => setCancellingId(null)}>Keep it</button>
+                      </div>
+                    ) : (
+                      <button className="pl-cancel-btn" onClick={() => setCancellingId(l.id)}>Cancel</button>
+                    )}
                   </div>
                 ))
             )}
