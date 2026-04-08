@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   > = {};
 
   for (const signup of signups ?? []) {
-    const profile = signup.profiles as {
+    const profile = signup.profiles as unknown as {
       id: string;
       first_name: string;
       last_name: string;

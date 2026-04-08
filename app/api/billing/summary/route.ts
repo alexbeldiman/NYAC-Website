@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
     signups = (signupRows ?? []).map((r) => ({
       slot_id: r.slot_id,
       guest_count: r.guest_count,
-      member: r.member as {
+      member: r.member as unknown as {
         first_name: string;
         last_name: string;
         audit_number: string;
@@ -156,17 +156,17 @@ export async function GET(request: NextRequest) {
   const lessonRows = (lessonsResult.data ?? []).map((r) => ({
     start_time: r.start_time,
     duration_minutes: r.duration_minutes,
-    member: r.member as {
+    member: r.member as unknown as {
       first_name: string;
       last_name: string;
       audit_number: string;
     } | null,
-    coach: r.coach as { first_name: string; last_name: string } | null,
+    coach: r.coach as unknown as { first_name: string; last_name: string } | null,
   }));
 
   const mitlRows = (mitlResult.data ?? []).map((r) => ({
-    session: r.session as { program: string; start_time: string } | null,
-    child: r.child as {
+    session: r.session as unknown as { program: string; start_time: string } | null,
+    child: r.child as unknown as {
       first_name: string;
       last_name: string;
       audit_number: string;
@@ -192,9 +192,9 @@ export async function GET(request: NextRequest) {
 
   // Union of all audit numbers
   const allAuditNumbers = new Set([
-    ...clinicByAudit.keys(),
-    ...lessonByAudit.keys(),
-    ...mitlByAudit.keys(),
+    ...Array.from(clinicByAudit.keys()),
+    ...Array.from(lessonByAudit.keys()),
+    ...Array.from(mitlByAudit.keys()),
   ]);
 
   const result = Array.from(allAuditNumbers)

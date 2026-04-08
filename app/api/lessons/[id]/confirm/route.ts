@@ -33,7 +33,7 @@ export async function POST(
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
-  const profile = lesson.profiles as { last_name: string; audit_number: string } | null;
+  const profile = lesson.profiles as unknown as { last_name: string; audit_number: string } | null;
 
   if (
     !profile ||

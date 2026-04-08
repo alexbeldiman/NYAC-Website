@@ -60,12 +60,12 @@ export async function GET(request: NextRequest) {
   const typed = (rows ?? []).map((r) => ({
     start_time: r.start_time,
     duration_minutes: r.duration_minutes,
-    member: r.member as {
+    member: r.member as unknown as {
       first_name: string;
       last_name: string;
       audit_number: string;
     } | null,
-    coach: r.coach as { first_name: string; last_name: string } | null,
+    coach: r.coach as unknown as { first_name: string; last_name: string } | null,
   }));
 
   return NextResponse.json(groupLessonRows(typed));

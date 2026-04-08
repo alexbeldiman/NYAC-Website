@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       "director",
       "creator",
     ]);
-    if (response || !staff) return response;
+    if (response || !staff) return response ?? NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
     const {

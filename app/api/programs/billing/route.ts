@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
   }
 
   const typedRows = (rows ?? []).map((r) => ({
-      session: r.session as { program: string; start_time: string } | null,
-      child: r.child as {
+      session: r.session as unknown as { program: string; start_time: string } | null,
+      child: r.child as unknown as {
         first_name: string;
         last_name: string;
         audit_number: string;

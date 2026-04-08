@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       "director",
       "creator",
     ]);
-    if (response || !staff) return response;
+    if (response || !staff) return response ?? NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = request.nextUrl;
     const coach_id = searchParams.get("coach_id");

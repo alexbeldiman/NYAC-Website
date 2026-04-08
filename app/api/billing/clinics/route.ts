@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
   const rows = (signups ?? []).map((signup) => ({
     guest_count: signup.guest_count,
     slot: slotMap.get(signup.slot_id) ?? null,
-    member: signup.member as {
+    member: signup.member as unknown as {
       first_name: string;
       last_name: string;
       audit_number: string;

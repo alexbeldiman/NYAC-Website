@@ -179,7 +179,7 @@ export default function PrivateLessonsPage() {
           memberMap.set(l.member_id, { id: l.member_id, first_name: l.member.first_name, last_name: l.member.last_name });
         }
       }
-      const members = [...memberMap.values()];
+      const members = Array.from(memberMap.values());
 
       credsRef.current = { auditNumber: audit, lastName: last };
       setFamilyMembers(members);
