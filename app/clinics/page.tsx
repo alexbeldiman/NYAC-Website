@@ -789,6 +789,8 @@ export default function ClinicsPage() {
           .info-tile { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
           .info-tile:last-child { border-bottom: none; }
         }
+        #signup-notice { background: #FFFBEB; border-bottom: 1px solid #FDE68A; padding: 10px 24px; text-align: center; }
+        #signup-notice p { font-family: var(--font-ui); font-size: 12px; color: #92400E; letter-spacing: 0.04em; margin: 0; }
         @media (max-width: 768px) {
           .hero-title { font-size: 36px; }
           .main-wrap { padding: 40px 20px 64px; }
@@ -811,6 +813,11 @@ export default function ClinicsPage() {
           <p className="hero-subtitle">Saturday &amp; Sunday &middot; Travers Island</p>
         </div>
       </section>
+
+      {/* ─── SIGNUP NOTICE ───────────────────────────────────────── */}
+      <div id="signup-notice">
+        <p>Sign-ups open 2 hours before each clinic starts. Early registrations will not be accepted.</p>
+      </div>
 
       {/* ─── VERIFY BAR ───────────────────────────────────────────── */}
       {showVerifyBar && (
