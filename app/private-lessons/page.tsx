@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -597,7 +598,6 @@ export default function PrivateLessonsPage() {
         /* Slim Hero */
         #pl-slim-hero {
           height: 320px;
-          background: url('/NYAC.Website.Photos/Arial-courts-final.jpeg') center/cover no-repeat;
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           text-align: center; padding-top: 76px; position: relative;
         }
@@ -761,6 +761,7 @@ export default function PrivateLessonsPage() {
 
       {/* ─── SLIM HERO ─────────────────────────────────────────── */}
       <section id="pl-slim-hero">
+        <Image fill priority src="/NYAC.Website.Photos/Arial-courts-final.jpeg" alt="" style={{ objectFit: 'cover', zIndex: -1 }} />
         <h1>Private Lessons</h1>
         <hr className="slim-hero-divider" />
         <p className="hero-location">NYAC Travers Island</p>

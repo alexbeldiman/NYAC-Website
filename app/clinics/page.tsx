@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -671,8 +672,6 @@ export default function ClinicsPage() {
       <style suppressHydrationWarning>{`
         /* ─── HERO (slim) ──────────────────────────────────────── */
         #hero-section {
-          background-image: url('/NYAC.Website.Photos/Arial.View.Courts.png');
-          background-size: cover; background-position: center 60%;
           position: relative; height: 320px;
           display: flex; align-items: center; justify-content: center; text-align: center;
           margin-top: var(--nav-height);
@@ -803,6 +802,7 @@ export default function ClinicsPage() {
 
       {/* ─── HERO ─────────────────────────────────────────────────── */}
       <section id="hero-section">
+        <Image fill priority src="/NYAC.Website.Photos/Arial.View.Courts.png" alt="" style={{ objectFit: 'cover', objectPosition: 'center 60%', zIndex: -1 }} />
         <div className="hero-overlay"></div>
         <div className="hero-content">
           <p className="hero-eyebrow">NYAC Travers Island</p>

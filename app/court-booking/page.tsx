@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -387,7 +388,6 @@ export default function CourtBookingPage() {
       <style suppressHydrationWarning>{`
         #slim-hero {
           height: 320px;
-          background: url('/NYAC.Website.Photos/Side.View.Courts.png') center/cover no-repeat;
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           text-align: center; padding-top: 76px; margin-top: var(--nav-height);
           position: relative;
@@ -555,6 +555,7 @@ export default function CourtBookingPage() {
 
       {/* ─── Slim Hero ───────────────────────────────────────────── */}
       <section id="slim-hero">
+        <Image fill priority src="/NYAC.Website.Photos/Side.View.Courts.png" alt="" style={{ objectFit: 'cover', zIndex: -1 }} />
         <h1>Book a Court</h1>
         <hr className="slim-hero-divider" />
         <p className="hero-location">NYAC Travers Island</p>

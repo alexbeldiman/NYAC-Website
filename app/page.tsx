@@ -46,10 +46,6 @@ export default function Home() {
       <style suppressHydrationWarning>{`
         /* ─── HERO ──────────────────────────────────────────────────── */
         #hero-section {
-          background-image: url('/NYAC.Website.Photos/Arial.View.Courts.png');
-          background-size: cover;
-          background-position: center center;
-          background-attachment: fixed;
           position: relative;
           min-height: 100vh;
           display: flex;
@@ -468,6 +464,7 @@ export default function Home() {
 
       {/* ─── HERO ─────────────────────────────────────────────────── */}
       <section id="hero-section">
+        <Image fill priority src="/NYAC.Website.Photos/Arial.View.Courts.png" alt="" style={{ objectFit: 'cover', zIndex: -1 }} />
         <div className="hero-overlay"></div>
         <div className="hero-content">
           <p className="hero-eyebrow">NYAC Travers Island</p>
