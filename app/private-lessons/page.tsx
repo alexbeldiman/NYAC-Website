@@ -359,73 +359,71 @@ export default function PrivateLessonsPage() {
     setCancelLoading(false);
   }
 
-  /* ─── Date grid builder ──────────────────────────────────────── */
-  function renderDateGrid() {
-    const hasDate = !!selectedDateISO;
+  /* ─── Date slot list ─────────────────────────────────────────── */
+  function renderDateSlotList() {
+    if (!selectedDateISO) {
+      return <p style={{ fontFamily: 'var(--font-body)', fontStyle: 'italic', fontSize: 14, color: 'var(--mid-gray)', paddingTop: 8 }}>Select a date above to see available times.</p>;
+    }
+    const now = new Date();
+    const todayISO = dateISO(now);
     return (
-      <div className="pl-grid-wrapper" id="pl-date-grid-wrapper">
-        {!hasDate && (
-          <div id="pl-grid-overlay">
-            <p>Select a date above to view availability</p>
-          </div>
-        )}
-        <table id="pl-date-grid">
-          <thead>
-            <tr>
-              <th className="pl-time-col-header"></th>
-              {coaches.map(c => (
-                <th key={c.id}>
-                  {c.first_name}
-                  {hasDate && isCoachFullyUnavailable(c, selectedDateISO!) && (
-                    <><br /><span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0, opacity: 0.7 }}>Unavail.</span></>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {TIME_SLOTS.map(slot => (
-              <tr key={slot}>
-                <td className="pl-time-label">{slotTo12(slot)}</td>
-                {coaches.map(c => {
-                  if (!hasDate) return <td key={c.id} className="pl-slot-cell pl-taken" />;
-                  const taken = isSlotTaken(c, selectedDateISO!, slot);
-                  const isPast = (() => {
-                    const now = new Date();
-                    const todayISO = dateISO(now);
-                    if (selectedDateISO !== todayISO) return false;
-                    const [sh] = slot.split(':').map(Number);
-                    return sh <= now.getHours();
-                  })();
-                  const isSelected = dateSelectedCoachId === c.id && dateSelectedSlot === slot;
-                  const isPopup = popupCell?.coachId === c.id && popupCell?.dateISO === selectedDateISO && popupCell?.slot === slot;
-                  let cls = 'pl-slot-cell';
-                  if (isSelected || isPopup) cls += ' pl-selected';
-                  else if (taken || isPast) cls += ' pl-taken';
-                  else cls += ' pl-avail';
+      <div className="date-slot-list">
+        {TIME_SLOTS.map(slot => {
+          const [sh] = slot.split(':').map(Number);
+          const isPast = selectedDateISO === todayISO && sh <= now.getHours();
+          const availableCount = coaches.filter(c => !isSlotTaken(c, selectedDateISO!, slot) && !isCoachFullyUnavailable(c, selectedDateISO!)).length;
+          const isAvail = !isPast && availableCount > 0;
+          const isSelected = dateSelectedSlot === slot;
+          return (
+            <button
+              key={slot}
+              className={`date-slot-item${isSelected ? ' ds-selected' : ''}`}
+              disabled={!isAvail}
+              onClick={isAvail ? () => { setDateSelectedSlot(slot); setPendingBooking(null); setBookingStep(0); } : undefined}
+            >
+              <span className="date-slot-time">{slotTo12(slot)}</span>
+              <span className="date-slot-avail">
+                {isPast ? 'Past' : !isAvail ? 'No availability' : `${availableCount} coach${availableCount !== 1 ? 'es' : ''}`}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
-                  return (
-                    <td
-                      key={c.id}
-                      className={cls}
-                      onClick={taken || isPast ? undefined : () => handleSlotClick(c.id, selectedDateISO!, slot)}
-                    >
-                      {isPopup && !taken && (
-                        <div className="pl-cell-popup" onClick={e => e.stopPropagation()}>
-                          <span className="pl-cell-popup-label">{slotTo12(slot)} · {new Date(`${selectedDateISO}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                          <div className="pl-cell-popup-actions">
-                            <button className="btn-crimson pl-inline-confirm-btn" style={{ padding: '6px 14px', fontSize: 10 }} onClick={handleInlineConfirm}>Confirm</button>
-                            <button className="pl-inline-cancel-btn" onClick={() => { setPopupCell(null); setDateSelectedCoachId(null); setDateSelectedSlot(null); setDateSummary({ coach: '—', date: '—', time: '—' }); }}>Cancel</button>
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  /* ─── Coach picker ────────────────────────────────────────────── */
+  function renderCoachPicker() {
+    if (!selectedDateISO || !dateSelectedSlot) return null;
+    const availableCoaches = coaches.filter(c =>
+      !isSlotTaken(c, selectedDateISO!, dateSelectedSlot) &&
+      !isCoachFullyUnavailable(c, selectedDateISO!)
+    );
+    function selectCoach(coachId: string | null) {
+      const coach = coaches.find(c => c.id === coachId);
+      const coachName = coachId ? (coach ? `${coach.first_name} ${coach.last_name}` : '—') : 'Any Available Coach';
+      const d = new Date(`${selectedDateISO}T00:00:00`);
+      const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      const timeFmt = slotTo12(dateSelectedSlot!);
+      const startTime = `${selectedDateISO}T${dateSelectedSlot}:00`;
+      setPendingBooking({ coachName, dateLong, timeFmt, startTime, coachId });
+      setBookingStep(1);
+      setTimeout(() => document.getElementById('pl-confirmation-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+    return (
+      <div className="coach-picker">
+        <h3 className="coach-picker-heading">Choose a Coach</h3>
+        <hr className="divider-crimson" style={{ width: 40, margin: '10px 0 20px' }} />
+        <button className="coach-pick-card" onClick={() => selectCoach(null)}>
+          <span className="coach-pick-name">Any Available Coach</span>
+          <span className="coach-pick-sub">We&apos;ll match you with the first available coach</span>
+        </button>
+        {availableCoaches.map(c => (
+          <button key={c.id} className="coach-pick-card" onClick={() => selectCoach(c.id)}>
+            <span className="coach-pick-name">{c.first_name} {c.last_name}</span>
+            <span className="coach-pick-sub">{c.role}</span>
+          </button>
+        ))}
       </div>
     );
   }
@@ -674,17 +672,19 @@ export default function PrivateLessonsPage() {
         .pl-lessons-tab { font-family: var(--font-ui); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid-gray); background: none; border: none; border-bottom: 2px solid transparent; padding: 12px 24px 12px 0; cursor: pointer; margin-right: 24px; transition: color 0.2s, border-color 0.2s; }
         .pl-lessons-tab:hover { color: var(--dark); }
         .pl-tab-active { color: var(--crimson); border-bottom-color: var(--crimson) !important; }
-        .pl-lesson-row { display: grid; grid-template-columns: 140px 1fr 130px 100px auto; align-items: center; gap: 12px 24px; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
-        .pl-cancel-btn { font-family: var(--font-ui); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); background: none; border: none; cursor: pointer; padding: 0; transition: color 0.2s; white-space: nowrap; }
-        .pl-cancel-btn:hover { color: var(--crimson); }
-        .pl-cancel-confirm { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-        .pl-cancel-yes { font-family: var(--font-ui); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--crimson); background: none; border: none; cursor: pointer; padding: 0; }
-        .pl-cancel-no { font-family: var(--font-ui); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); background: none; border: none; cursor: pointer; padding: 0; }
+        .pl-lesson-row { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
         .pl-lesson-row:first-child { border-top: 1px solid var(--light-gray); }
+        .pl-lesson-info { display: grid; grid-template-columns: 140px 1fr 130px 100px; align-items: center; gap: 0 24px; flex: 1; min-width: 0; }
         .pl-lesson-row-date { font-family: var(--font-body); font-size: 14px; color: var(--dark); }
-        .pl-lesson-row-coach { font-family: var(--font-body); font-size: 14px; color: var(--dark); }
+        .pl-lesson-row-coach { font-family: var(--font-body); font-size: 14px; color: var(--dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .pl-lesson-row-time { font-family: var(--font-ui); font-size: 12px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: 0.08em; }
         .pl-lesson-row-status { font-family: var(--font-ui); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+        .pl-cancel-btn { font-family: var(--font-ui); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); background: none; border: none; cursor: pointer; padding: 0; transition: color 0.2s; white-space: nowrap; flex-shrink: 0; }
+        .pl-cancel-btn:hover { color: var(--crimson); }
+        .pl-cancel-confirm { display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+        .pl-cancel-yes { font-family: var(--font-ui); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--crimson); background: none; border: none; cursor: pointer; padding: 0; }
+        .pl-cancel-no { font-family: var(--font-ui); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mid-gray); background: none; border: none; cursor: pointer; padding: 0; }
+        @media (max-width: 640px) { .pl-lesson-info { grid-template-columns: 1fr 72px; gap: 2px 8px; } .pl-lesson-row-time { grid-column: 1; } .pl-lesson-row-status { grid-column: 2; grid-row: 1; text-align: right; } }
         .pl-lesson-status-upcoming { color: #228B22; }
         .pl-lesson-status-past { color: var(--mid-gray); }
         .pl-lessons-empty { font-family: var(--font-body); font-style: italic; font-size: 14px; color: var(--mid-gray); padding: 32px 0; }
@@ -788,8 +788,24 @@ export default function PrivateLessonsPage() {
         .success-check span { font-family: var(--font-display); font-size: 28px; color: var(--crimson); line-height: 1; }
         .success-detail { font-family: var(--font-body); font-size: 13px; color: var(--mid-gray); text-align: center; line-height: 1.8; }
 
+        /* Date slot list */
+        .date-slot-list { display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 300px; }
+        .date-slot-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border: 1px solid var(--light-gray); background: var(--white); cursor: pointer; transition: border-color 0.2s; width: 100%; text-align: left; }
+        .date-slot-item:not(:disabled):hover { border-color: var(--crimson); }
+        .date-slot-item.ds-selected { border-color: var(--crimson); background: #FDF5F5; }
+        .date-slot-item:disabled { opacity: 0.38; cursor: default; }
+        .date-slot-time { font-family: var(--font-ui); font-size: 13px; font-weight: 500; color: var(--dark); }
+        .date-slot-avail { font-family: var(--font-ui); font-size: 11px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: 0.1em; }
+        .date-slot-item.ds-selected .date-slot-avail { color: var(--crimson); }
+        /* Coach picker */
+        .coach-picker { flex: 1; min-width: 240px; }
+        .coach-picker-heading { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--dark); margin-bottom: 4px; }
+        .coach-pick-card { width: 100%; display: flex; flex-direction: column; align-items: flex-start; padding: 16px 20px; border: 1px solid var(--light-gray); background: var(--white); cursor: pointer; margin-bottom: 8px; transition: border-color 0.2s; text-align: left; }
+        .coach-pick-card:hover { border-color: var(--crimson); }
+        .coach-pick-name { font-family: var(--font-body); font-size: 15px; color: var(--dark); }
+        .coach-pick-sub { font-family: var(--font-body); font-size: 12px; color: var(--mid-gray); font-style: italic; margin-top: 2px; }
         /* Mobile */
-        @media (max-width: 768px) { .path-cards { grid-template-columns: 1fr; } #pl-coach-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .path-cards { grid-template-columns: 1fr; } #pl-coach-grid { grid-template-columns: 1fr; } .date-slot-list { max-width: 100%; } }
         @media (max-width: 600px) { #pl-slim-hero h1 { font-size: 36px; } #verify-card { padding: 40px 24px; } }
       `}</style>
 
@@ -891,10 +907,12 @@ export default function PrivateLessonsPage() {
                 ? <p className="pl-lessons-empty">No upcoming lessons scheduled.</p>
                 : upcomingLessons.map(l => (
                   <div key={l.id} className="pl-lesson-row">
-                    <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                    <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
-                    <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
-                    <span className={`pl-lesson-row-status pl-lesson-status-upcoming`}>{l.status === 'pending_pickup' ? 'Pending' : 'Confirmed'}</span>
+                    <div className="pl-lesson-info">
+                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
+                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
+                      <span className={`pl-lesson-row-status pl-lesson-status-upcoming`}>{l.status === 'pending_pickup' ? 'Pending' : 'Confirmed'}</span>
+                    </div>
                     {cancellingId === l.id ? (
                       <div className="pl-cancel-confirm">
                         <button className="pl-cancel-yes" disabled={cancelLoading} onClick={() => handleCancelLesson(l.id)}>
@@ -914,10 +932,12 @@ export default function PrivateLessonsPage() {
                 ? <p className="pl-lessons-empty">No past lessons found.</p>
                 : pastLessons.map(l => (
                   <div key={l.id} className="pl-lesson-row">
-                    <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                    <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
-                    <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
-                    <span className="pl-lesson-row-status pl-lesson-status-past">{l.status === 'completed' ? 'Completed' : l.status}</span>
+                    <div className="pl-lesson-info">
+                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
+                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
+                      <span className="pl-lesson-row-status pl-lesson-status-past">{l.status === 'completed' ? 'Completed' : l.status}</span>
+                    </div>
                   </div>
                 ))
             )}
@@ -940,26 +960,8 @@ export default function PrivateLessonsPage() {
                   <>
                     {renderDateFilterBar()}
                     <div className="pl-grid-layout">
-                      {renderDateGrid()}
-                      <div className="pl-right-panel">
-                        <div className="pl-panel-box">
-                          <span className="legend-heading">How to Book</span>
-                          <hr className="legend-divider" />
-                          <ol className="pl-how-to-list">
-                            <li>Select a date using the filter above.</li>
-                            <li>Click an available slot to begin your booking.</li>
-                          </ol>
-                        </div>
-                        <div className="pl-panel-box">
-                          <span className="legend-heading">Booking Summary</span>
-                          <hr className="legend-divider" />
-                          <div className="booking-summary-row">
-                            <span className="summary-label">Coach</span><span className="summary-value">{dateSummary.coach}</span>
-                            <span className="summary-label">Date</span><span className="summary-value">{dateSummary.date}</span>
-                            <span className="summary-label">Time</span><span className="summary-value">{dateSummary.time}</span>
-                          </div>
-                        </div>
-                      </div>
+                      {renderDateSlotList()}
+                      {dateSelectedSlot && renderCoachPicker()}
                     </div>
                   </>
                 )}
