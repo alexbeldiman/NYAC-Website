@@ -28,52 +28,43 @@ export async function GET(request: NextRequest) {
     }
 
     if (!family || family.length === 0) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const memberIds = family.map((f) => f.id);
     const serviceClient = createServiceClient();
-    const { data: lessons, error: lessonError } = await serviceClient
+
+    const { data: bookings, error: bookingsError } = await serviceClient
       .from("private_lessons")
       .select(
         `
         id,
         member_id,
-        coach_id,
         start_time,
         duration_minutes,
         status,
-        is_recurring,
-        booked_via,
-        confirmation_sent_at,
-        confirmed_by_member,
-        member:profiles!private_lessons_member_id_fkey(first_name, last_name, audit_number),
-        coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
+        court:courts!private_lessons_court_id_fkey(id, name),
+        member:profiles!private_lessons_member_id_fkey(first_name, last_name)
         `
       )
       .in("member_id", memberIds)
-      .neq("booked_via", "court_booking")
+      .eq("booked_via", "court_booking")
       .order("start_time");
 
-    if (lessonError) {
-      return NextResponse.json({ error: lessonError.message }, { status: 500 });
+    if (bookingsError) {
+      return NextResponse.json({ error: bookingsError.message }, { status: 500 });
     }
 
     const now = new Date();
-    const upcoming: typeof lessons = [];
-    const past: typeof lessons = [];
-    for (const lesson of lessons ?? []) {
-      const startTime = new Date(lesson.start_time);
-      if (
-        startTime >= now &&
-        (lesson.status === "confirmed" || lesson.status === "pending_pickup")
-      ) {
-        upcoming.push(lesson);
+    const upcoming: typeof bookings = [];
+    const past: typeof bookings = [];
+
+    for (const booking of bookings ?? []) {
+      const startTime = new Date(booking.start_time);
+      if (startTime >= now && booking.status === "confirmed") {
+        upcoming.push(booking);
       } else {
-        past.push(lesson);
+        past.push(booking);
       }
     }
     past.reverse();

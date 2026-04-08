@@ -62,14 +62,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Slot not found" }, { status: 404 });
   }
 
-  // Check gender restriction
-  if (slot.gender_restriction === "men_only" && member.gender !== "male") {
+  // Check gender restriction — only block on an explicit mismatch; null gender is allowed through
+  if (slot.gender_restriction === "men_only" && member.gender && member.gender !== "male") {
     return NextResponse.json(
       { error: "This session is for men only." },
       { status: 403 }
     );
   }
-  if (slot.gender_restriction === "women_only" && member.gender !== "female") {
+  if (slot.gender_restriction === "women_only" && member.gender && member.gender !== "female") {
     return NextResponse.json(
       { error: "This session is for women only." },
       { status: 403 }

@@ -79,7 +79,9 @@ nyac-website/
 │   │   ├── programs/           # Program sessions, attendance, billing
 │   │   ├── staff/              # Staff creation
 │   │   └── verify/             # Code verification
-│   ├── (demo)/                 # Demo/prototype UI pages (clinics, lessons, director)
+│   ├── clinics/                # Public clinic signup page
+│   ├── court-booking/          # Public court booking page
+│   ├── private-lessons/        # Public private lessons booking page
 │   └── staff/                  # Staff-facing UI (director dashboard, login)
 │
 ├── lib/
@@ -90,7 +92,6 @@ nyac-website/
 │   ├── billingHelpers.ts       # Billing calculation utilities
 │   ├── notifications.ts        # Notification stubs (email/SMS hooks)
 │   ├── recurringJobs.ts        # Recurring lesson series extension job
-│   └── mock-data/              # Seed data and test fixtures
 │
 └── supabase/
     └── migrations/             # Ordered SQL migration files

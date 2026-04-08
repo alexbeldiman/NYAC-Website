@@ -20,9 +20,9 @@ No test runner is configured. There is no `npm test` script.
 
 ### Two Distinct Experiences
 
-**Public site** (`app/(public)/`) — No login required. Members verify identity per-request using last name + audit number. They can sign up for clinics and book private lessons. No user accounts.
+**Public site** (`app/clinics/`, `app/court-booking/`, `app/private-lessons/`) — No login required. Members verify identity per-request using last name + audit number. They can sign up for clinics and book private lessons. No user accounts.
 
-**Staff app** (`app/(staff)/`) — Protected by `middleware.ts`. Supabase Auth (email/password). Five roles: `creator`, `director`, `coach`, `tennis_house`, `member` (stored in `profiles.role`).
+**Staff app** (`app/staff/`) — Protected by `middleware.ts`. Supabase Auth (email/password). Five roles: `creator`, `director`, `coach`, `tennis_house`, `member` (stored in `profiles.role`).
 
 ### Member Verification (No Auth)
 
@@ -79,9 +79,8 @@ Migrations are in `supabase/migrations/`. RLS policies enforce that staff see ev
 ### Work Split
 
 - **Backend (API routes, DB schema, lib/)** — Alex
-- **Frontend (public and staff UI pages)** — Jake
-
-The `app/(demo)/` directory contains prototype UI pages and is separate from production routes.
+- **Frontend (public pages)** — Done: `app/clinics/`, `app/court-booking/`, `app/private-lessons/`, `app/page.tsx`
+- **Frontend (staff dashboards)** — Jake, pending. Specs in `docs/frontend-references/`
 
 ## Strict Backend Guardrails (Anti-Vibe Coding)
 - **Database Truth**: Always reference files in `supabase/migrations/` to verify table columns before writing queries.

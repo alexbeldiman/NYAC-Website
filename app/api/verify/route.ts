@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
       )
       .ilike("last_name", last_name)
       .eq("audit_number", audit_number)
-      .eq("is_child", false);
+      .eq("is_child", false)
+      .order('first_name');
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

@@ -64,7 +64,13 @@ export async function POST(request: NextRequest) {
     start_time,
     duration_minutes,
     coach_id,
+    court_id,
+    booked_via: bookedViaInput,
   } = body;
+
+  const VALID_BOOKED_VIA = ['member_app', 'tennis_house', 'coach', 'court_booking'] as const;
+  type BookedVia = typeof VALID_BOOKED_VIA[number];
+  const booked_via: BookedVia = VALID_BOOKED_VIA.includes(bookedViaInput) ? bookedViaInput : 'member_app';
 
   if (!last_name || !audit_number || !member_id || !start_time || !duration_minutes) {
     return NextResponse.json(
@@ -160,7 +166,8 @@ export async function POST(request: NextRequest) {
       ? new Date(start.getTime() - 24 * 3_600_000).toISOString()
       : new Date(now.getTime() + 6 * 3_600_000).toISOString();
 
-  const status = coach_id ? "confirmed" : "pending_pickup";
+  // Court bookings are always confirmed (no coach to pick up)
+  const status = (coach_id || booked_via === 'court_booking') ? "confirmed" : "pending_pickup";
 
   // 6. Insert lesson
   const serviceClient = createServiceClient();
@@ -171,10 +178,11 @@ export async function POST(request: NextRequest) {
       member_id,
       booked_by_id: member_id,
       coach_id: coach_id ?? null,
+      court_id: court_id ?? null,
       start_time,
       duration_minutes,
       status,
-      booked_via: "member_app",
+      booked_via,
       confirmation_sent_at,
     })
     .select()
