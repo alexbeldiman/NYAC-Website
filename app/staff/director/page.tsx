@@ -71,6 +71,7 @@ export default function DirectorPage() {
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
   const [coaches, setCoaches] = useState<CoachOption[]>([]);
   const [filterCoachId, setFilterCoachId] = useState('');
+  const [lessonViewMode, setLessonViewMode] = useState<'all' | 'mine' | 'others'>('all');
 
   // Billing tab
   const [billingSubTab, setBillingSubTab] = useState<'global' | 'clinics' | 'lessons' | 'programs'>('global');
@@ -411,8 +412,33 @@ export default function DirectorPage() {
                     <button onClick={() => setLessonsDate(d => addDays(d, 1))}>›</button>
                     <input type="date" className="staff-input" style={{ width: 'auto' }} value={lessonsDate} onChange={e => setLessonsDate(e.target.value)} />
                   </div>
-                  <select className="staff-input" style={{ width: 180 }} value={filterCoachId} onChange={e => setFilterCoachId(e.target.value)}>
-                    <option value="">All Coaches</option>
+
+                  <div style={{ display: 'flex', border: '1px solid var(--staff-border)', borderRadius: 4, overflow: 'hidden' }}>
+                    <button 
+                      className="btn-staff-ghost" 
+                      style={{ border: 'none', borderRadius: 0, padding: '8px 16px', background: lessonViewMode === 'all' ? 'var(--staff-border)' : 'transparent', color: lessonViewMode === 'all' ? 'white' : 'var(--staff-muted)' }} 
+                      onClick={() => { setLessonViewMode('all'); setFilterCoachId(''); }}
+                    >
+                      All
+                    </button>
+                    <button 
+                      className="btn-staff-ghost" 
+                      style={{ border: 'none', borderLeft: '1px solid var(--staff-border)', borderRadius: 0, padding: '8px 16px', background: lessonViewMode === 'mine' ? 'var(--staff-border)' : 'transparent', color: lessonViewMode === 'mine' ? 'white' : 'var(--staff-muted)' }} 
+                      onClick={() => { setLessonViewMode('mine'); setFilterCoachId(''); }}
+                    >
+                      My Lessons
+                    </button>
+                    <button 
+                      className="btn-staff-ghost" 
+                      style={{ border: 'none', borderLeft: '1px solid var(--staff-border)', borderRadius: 0, padding: '8px 16px', background: lessonViewMode === 'others' ? 'var(--staff-border)' : 'transparent', color: lessonViewMode === 'others' ? 'white' : 'var(--staff-muted)' }} 
+                      onClick={() => { setLessonViewMode('others'); setFilterCoachId(''); }}
+                    >
+                      Other Coaches
+                    </button>
+                  </div>
+
+                  <select className="staff-input" style={{ width: 180 }} value={filterCoachId} onChange={e => { setFilterCoachId(e.target.value); setLessonViewMode('all'); }}>
+                    <option value="">Specific Coach...</option>
                     {coaches.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
                   </select>
                 </div>
@@ -424,7 +450,13 @@ export default function DirectorPage() {
                   <table className="staff-table">
                     <thead><tr><th>Time</th><th>Duration</th><th>Member</th><th>Coach</th><th>Status</th><th>Via</th><th></th></tr></thead>
                     <tbody>
-                      {lessons.map(l => (
+                      {lessons
+                        .filter(l => {
+                          if (lessonViewMode === 'mine') return user && l.coach_id === user.id;
+                          if (lessonViewMode === 'others') return user && l.coach_id !== user.id && l.coach_id !== null;
+                          return true;
+                        })
+                        .map(l => (
                         <tr key={l.id}>
                           <td className="td-primary">{fmtTime(l.start_time)}</td>
                           <td>{l.duration_minutes} min</td>
