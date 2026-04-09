@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
         coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
         `
       )
+      .neq("booked_via", "court_booking")
       .order("start_time");
 
     if (coach_id) query = query.eq("coach_id", coach_id);
