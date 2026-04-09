@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const coach_id = searchParams.get("coach_id");
     const date = searchParams.get("date");
+    const start_date = searchParams.get("start_date");
+    const end_date = searchParams.get("end_date");
     const status = searchParams.get("status");
 
     let query = supabase
@@ -41,6 +43,10 @@ export async function GET(request: NextRequest) {
       query = query
         .gte("start_time", `${date}T00:00:00Z`)
         .lt("start_time", `${date}T24:00:00Z`);
+    } else if (start_date && end_date) {
+      query = query
+        .gte("start_time", `${start_date}T00:00:00Z`)
+        .lt("start_time", `${end_date}T24:00:00Z`);
     }
 
     const { data, error } = await query;

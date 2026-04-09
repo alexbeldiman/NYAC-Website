@@ -60,6 +60,11 @@ export default function DirectorPage() {
   const [activeTab, setActiveTab] = useState('schedule');
 
   // Lessons tab
+  const [lessonStep, setLessonStep] = useState<'root' | 'coach_select' | 'week_view' | 'day_view'>('root');
+  const [selectedLessonCoachId, setSelectedLessonCoachId] = useState<string | null>(null);
+  const [weekStartDate, setWeekStartDate] = useState(todayStr());
+  const [selectedDayDate, setSelectedDayDate] = useState(todayStr());
+
   const [lessonsDate, setLessonsDate] = useState(todayStr());
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [lessonsLoading, setLessonsLoading] = useState(false);
@@ -149,6 +154,16 @@ export default function DirectorPage() {
     finally { setLessonsLoading(false); }
   }, []);
 
+  const fetchLessonsRange = useCallback(async (start: string, end: string, coachId: string) => {
+    setLessonsLoading(true);
+    try {
+      const res = await fetch(`/api/lessons?start_date=${start}&end_date=${end}&coach_id=${coachId}`);
+      const data = await res.json();
+      setLessons(Array.isArray(data) ? data : []);
+    } catch { setLessons([]); }
+    finally { setLessonsLoading(false); }
+  }, []);
+
   const fetchRecurrences = useCallback(async () => {
     setRecurLoading(true);
     try {
@@ -164,10 +179,13 @@ export default function DirectorPage() {
       fetchCoaches();
     }
     if (activeTab === 'lessons') {
-      fetchLessons(lessonsDate, filterCoachId || undefined);
+      if (lessonStep === 'week_view' || lessonStep === 'day_view') {
+        const end = addDays(weekStartDate, 7); // fetch 7 days including start
+        fetchLessonsRange(weekStartDate, end, selectedLessonCoachId || '');
+      }
       if (showRecurring) fetchRecurrences();
     }
-  }, [activeTab, lessonsDate, filterCoachId, showRecurring, fetchLessons, fetchRecurrences, fetchCoaches]);
+  }, [activeTab, lessonStep, weekStartDate, selectedLessonCoachId, showRecurring, fetchLessonsRange, fetchRecurrences, fetchCoaches]);
 
   // ─── Fetch billing ────────────────────────────────────────
   const fetchBilling = useCallback(async (subTab: string, week: string) => {
@@ -404,74 +422,188 @@ export default function DirectorPage() {
 
             {!showRecurring && (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
-                  <div className="date-controls">
-                    <button onClick={() => setLessonsDate(d => addDays(d, -1))}>‹</button>
-                    <span className="date-display">{fmtDate(lessonsDate)}</span>
-                    <button onClick={() => setLessonsDate(d => addDays(d, 1))}>›</button>
-                    <input type="date" className="staff-input" style={{ width: 'auto' }} value={lessonsDate} onChange={e => setLessonsDate(e.target.value)} />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, flexWrap: 'nowrap', scrollbarWidth: 'none' }}>
+                {lessonStep === 'root' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginTop: 40 }}>
                     <button 
-                      className={`btn-staff-ghost ${filterCoachId === '' ? 'active' : ''}`}
-                      style={{ padding: '6px 14px', whiteSpace: 'nowrap', borderColor: filterCoachId === '' ? 'var(--crimson)' : 'var(--staff-border)', background: filterCoachId === '' ? 'rgba(200,16,46,0.08)' : 'transparent', color: filterCoachId === '' ? 'var(--staff-text)' : 'var(--staff-muted)' }}
-                      onClick={() => setFilterCoachId('')}
+                      className="staff-card" 
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s', border: '1px solid var(--staff-border)' }}
+                      onClick={() => { setSelectedLessonCoachId(user?.id || null); setWeekStartDate(todayStr()); setLessonStep('week_view'); }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--crimson)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--staff-border)'}
                     >
-                      All Lessons
+                      <div style={{ fontSize: 32, marginBottom: 16 }}>🧑‍🏫</div>
+                      <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, color: 'var(--staff-text)' }}>See Your Lessons</h2>
+                      <p style={{ color: 'var(--staff-muted)', fontSize: 13, marginTop: 8 }}>View and manage your personal coaching schedule</p>
                     </button>
-                    {user && (
-                      <button 
-                        className={`btn-staff-ghost ${filterCoachId === user.id ? 'active' : ''}`}
-                        style={{ padding: '6px 14px', whiteSpace: 'nowrap', borderColor: filterCoachId === user.id ? 'var(--crimson)' : 'var(--staff-border)', background: filterCoachId === user.id ? 'rgba(200,16,46,0.08)' : 'transparent', color: filterCoachId === user.id ? 'var(--staff-text)' : 'var(--staff-muted)' }}
-                        onClick={() => setFilterCoachId(user.id)}
-                      >
-                        My Lessons
-                      </button>
-                    )}
-                    {coaches.filter(c => c.id !== user?.id).map(c => (
-                      <button
-                        key={c.id}
-                        className={`btn-staff-ghost ${filterCoachId === c.id ? 'active' : ''}`}
-                        style={{ padding: '6px 14px', whiteSpace: 'nowrap', borderColor: filterCoachId === c.id ? 'var(--crimson)' : 'var(--staff-border)', background: filterCoachId === c.id ? 'rgba(200,16,46,0.08)' : 'transparent', color: filterCoachId === c.id ? 'var(--staff-text)' : 'var(--staff-muted)' }}
-                        onClick={() => setFilterCoachId(c.id)}
-                      >
-                        {c.first_name} {c.last_name}
-                      </button>
-                    ))}
+
+                    <button 
+                      className="staff-card" 
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s', border: '1px solid var(--staff-border)' }}
+                      onClick={() => setLessonStep('coach_select')}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--crimson)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--staff-border)'}
+                    >
+                      <div style={{ fontSize: 32, marginBottom: 16 }}>👥</div>
+                      <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, color: 'var(--staff-text)' }}>See Other Coaches</h2>
+                      <p style={{ color: 'var(--staff-muted)', fontSize: 13, marginTop: 8 }}>View the daily or weekly schedules of other staff members</p>
+                    </button>
                   </div>
-                </div>
-                {lessonsLoading ? (
-                  <div className="staff-empty">Loading…</div>
-                ) : lessons.length === 0 ? (
-                  <div className="staff-empty">No lessons for this date.</div>
-                ) : (
-                  <table className="staff-table">
-                    <thead><tr><th>Time</th><th>Duration</th><th>Member</th><th>Coach</th><th>Status</th><th>Via</th><th></th></tr></thead>
-                    <tbody>
-                      {lessons.map(l => (
-                        <tr key={l.id}>
-                          <td className="td-primary">{fmtTime(l.start_time)}</td>
-                          <td>{l.duration_minutes} min</td>
-                          <td className="td-primary">{l.member ? `${l.member.first_name} ${l.member.last_name}` : '—'}</td>
-                          <td>{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : '—'}</td>
-                          <td><span className={`badge badge-${l.status}`}>{l.status.replace('_',' ')}</span></td>
-                          <td style={{ fontSize: 11, color: 'var(--staff-muted)' }}>{l.booked_via}</td>
-                          <td style={{ textAlign: 'right' }}>
-                            {cancellingLessonId === l.id ? (
-                              <span style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                                <button className="btn-staff-danger" onClick={() => cancelLesson(l.id)}>Confirm</button>
-                                <button className="btn-staff-ghost" style={{ padding: '5px 8px' }} onClick={() => setCancellingLessonId(null)}>No</button>
-                              </span>
-                            ) : (
-                              l.status !== 'cancelled' && l.status !== 'completed' &&
-                              <button className="btn-staff-ghost" style={{ padding: '5px 12px', fontSize: 11, color: '#f87171', borderColor: 'rgba(200,16,46,0.2)' }} onClick={() => setCancellingLessonId(l.id)}>Cancel</button>
-                            )}
-                          </td>
-                        </tr>
+                )}
+
+                {lessonStep === 'coach_select' && (
+                  <div>
+                    <div style={{ marginBottom: 24 }}>
+                      <button className="btn-staff-ghost" onClick={() => setLessonStep('root')}>← Back</button>
+                    </div>
+                    <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, marginBottom: 24 }}>Select a Coach</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+                      {coaches.filter(c => c.id !== user?.id).map(c => (
+                        <button
+                          key={c.id}
+                          className="staff-card"
+                          style={{ padding: 24, textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s', border: '1px solid var(--staff-border)' }}
+                          onClick={() => { setSelectedLessonCoachId(c.id); setWeekStartDate(todayStr()); setLessonStep('week_view'); }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--crimson)'}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--staff-border)'}
+                        >
+                          <div style={{ fontWeight: 600, color: 'var(--staff-text)', fontFamily: 'var(--font-ui)' }}>{c.first_name} {c.last_name}</div>
+                        </button>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+                )}
+
+                {lessonStep === 'week_view' && (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+                      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <button className="btn-staff-ghost" onClick={() => setLessonStep(selectedLessonCoachId === user?.id ? 'root' : 'coach_select')}>← Back</button>
+                        <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, margin: 0 }}>
+                          {(coaches.find(c => c.id === selectedLessonCoachId) || user)?.first_name}'s Schedule
+                        </h2>
+                      </div>
+                      <div className="date-controls">
+                        <button onClick={() => setWeekStartDate(d => addDays(d, -7))}>‹</button>
+                        <span className="date-display">{fmtDate(weekStartDate)} - {fmtDate(addDays(weekStartDate, 6))}</span>
+                        <button onClick={() => setWeekStartDate(d => addDays(d, 7))}>›</button>
+                        <button onClick={() => setWeekStartDate(todayStr())} className="btn-staff-ghost" style={{ padding: '0 12px', fontSize: 11, height: 32, width: 'auto' }}>Today</button>
+                      </div>
+                    </div>
+
+                    {lessonsLoading ? (
+                      <div className="staff-empty">Loading weekly schedule...</div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8 }}>
+                        {Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i)).map(dateStr => {
+                          const dayLessons = lessons.filter(l => l.start_time.startsWith(dateStr));
+                          const isToday = dateStr === todayStr();
+                          
+                          return (
+                            <div 
+                              key={dateStr}
+                              onClick={() => { setSelectedDayDate(dateStr); setLessonStep('day_view'); }}
+                              style={{ border: `1px solid ${isToday ? 'var(--crimson)' : 'var(--staff-border)'}`, background: 'var(--staff-card)', padding: 12, cursor: 'pointer', minHeight: 200, display: 'flex', flexDirection: 'column' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--staff-surface)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'var(--staff-card)'}
+                            >
+                              <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--crimson)' : 'var(--staff-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                                {new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                              </div>
+                              <div style={{ fontSize: 18, fontFamily: 'var(--font-ui)', color: 'var(--staff-text)', marginBottom: 16 }}>
+                                {new Date(dateStr + 'T12:00:00').getDate()}
+                              </div>
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                                {dayLessons.length === 0 ? (
+                                  <div style={{ fontSize: 11, color: 'var(--staff-dim)', fontStyle: 'italic' }}>No lessons</div>
+                                ) : (
+                                  dayLessons.map(l => (
+                                    <div key={l.id} style={{ fontSize: 10, padding: '4px 6px', background: 'rgba(255,255,255,0.05)', borderLeft: '2px solid var(--crimson)', color: 'var(--staff-text)' }}>
+                                      <span style={{ color: 'var(--staff-muted)' }}>{fmtTime(l.start_time)}</span><br />
+                                      {l.member ? `${l.member.first_name} ${l.member.last_name.charAt(0)}.` : 'Member'}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {lessonStep === 'day_view' && (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+                      <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                        <button className="btn-staff-ghost" onClick={() => setLessonStep('week_view')}>← Back to Week</button>
+                        <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, margin: 0 }}>
+                          {fmtDate(selectedDayDate)}
+                        </h2>
+                      </div>
+                      <div className="date-controls">
+                        <button onClick={() => {
+                          const newD = addDays(selectedDayDate, -1);
+                          setSelectedDayDate(newD);
+                          if (newD < weekStartDate || newD > addDays(weekStartDate, 6)) {
+                            setWeekStartDate(newD);
+                          }
+                        }}>‹</button>
+                        <button onClick={() => {
+                          const newD = addDays(selectedDayDate, 1);
+                          setSelectedDayDate(newD);
+                          if (newD < weekStartDate || newD > addDays(weekStartDate, 6)) {
+                            setWeekStartDate(addDays(newD, -6));
+                          }
+                        }}>›</button>
+                      </div>
+                    </div>
+
+                    {lessonsLoading ? (
+                      <div className="staff-empty">Loading day schedule...</div>
+                    ) : (
+                      <div style={{ background: 'var(--staff-card)', border: '1px solid var(--staff-border)', borderRadius: 4 }}>
+                        {Array.from({ length: 14 }, (_, i) => i + 7).map(h => {
+                          const hourLessons = lessons.filter(l => {
+                            if (!l.start_time.startsWith(selectedDayDate)) return false;
+                            const startH = new Date(l.start_time).getHours();
+                            const endH = Math.floor((new Date(l.start_time).getTime() + l.duration_minutes * 60000 - 1) / 3600000);
+                            return startH <= h && endH >= h;
+                          });
+                          
+                          return (
+                            <div key={h} style={{ display: 'flex', borderBottom: '1px solid var(--staff-border)', minHeight: 60 }}>
+                              <div style={{ width: 80, padding: '12px', borderRight: '1px solid var(--staff-border)', textAlign: 'right', color: 'var(--staff-dim)', fontSize: 11, fontWeight: 600 }}>
+                                {h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h-12} PM`}
+                              </div>
+                              <div style={{ flex: 1, padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {hourLessons.map(l => (
+                                  <div key={`${l.id}-${h}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(200,16,46,0.1)', border: '1px solid rgba(200,16,46,0.3)', padding: '8px 12px', borderRadius: 4, flexWrap: 'wrap', gap: 8 }}>
+                                    <div>
+                                      <div style={{ color: 'var(--staff-text)', fontSize: 13, fontWeight: 600 }}>{l.member ? `${l.member.first_name} ${l.member.last_name}` : '—'}</div>
+                                      <div style={{ color: 'var(--staff-muted)', fontSize: 11, marginTop: 4 }}>{fmtTime(l.start_time)} • {l.duration_minutes} min • {l.status.replace('_',' ')}</div>
+                                    </div>
+                                    <div>
+                                      {cancellingLessonId === l.id ? (
+                                        <span style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                                          <button className="btn-staff-danger" onClick={() => cancelLesson(l.id)}>Confirm</button>
+                                          <button className="btn-staff-ghost" style={{ padding: '5px 8px' }} onClick={() => setCancellingLessonId(null)}>No</button>
+                                        </span>
+                                      ) : (
+                                        l.status !== 'cancelled' && l.status !== 'completed' &&
+                                        <button className="btn-staff-ghost" style={{ padding: '5px 12px', fontSize: 11, color: '#f87171', borderColor: 'rgba(200,16,46,0.2)' }} onClick={() => setCancellingLessonId(l.id)}>Cancel</button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
