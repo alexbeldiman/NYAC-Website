@@ -3,14 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import StaffLayout from '@/components/staff/StaffLayout';
+import DirectorSchedule from '@/components/staff/DirectorSchedule';
 
 // ─── Types ────────────────────────────────────────────────────
 interface Profile { id: string; first_name: string; last_name: string; role: string; }
-interface CourtScheduleRow {
-  id: string; name: string; is_pro_court: boolean;
-  status: string; blocked_reason: string | null;
-  lessons: { id: string; start_time: string; duration_minutes: number; status: string; member: { first_name: string; last_name: string } | null; coach: { first_name: string; last_name: string } | null; }[];
-}
 interface Lesson {
   id: string; start_time: string; duration_minutes: number;
   status: string; is_recurring: boolean; recurrence_id: string | null;
@@ -62,11 +58,6 @@ export default function DirectorPage() {
   const [user, setUser] = useState<Profile | null>(null);
   const [initLoading, setInitLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('schedule');
-
-  // Schedule tab
-  const [schedDate, setSchedDate] = useState(todayStr());
-  const [courtSchedule, setCourtSchedule] = useState<CourtScheduleRow[]>([]);
-  const [schedLoading, setSchedLoading] = useState(false);
 
   // Lessons tab
   const [lessonsDate, setLessonsDate] = useState(todayStr());
@@ -144,21 +135,6 @@ export default function DirectorPage() {
       setCoaches(Array.isArray(data) ? data : []);
     } catch { /* ignore */ }
   }, []);
-
-  // ─── Fetch court schedule ─────────────────────────────────
-  const fetchSchedule = useCallback(async (date: string) => {
-    setSchedLoading(true);
-    try {
-      const res = await fetch(`/api/courts/schedule?date=${date}`);
-      const data = await res.json();
-      setCourtSchedule(Array.isArray(data) ? data : []);
-    } catch { setCourtSchedule([]); }
-    finally { setSchedLoading(false); }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'schedule') fetchSchedule(schedDate);
-  }, [activeTab, schedDate, fetchSchedule]);
 
   // ─── Fetch lessons ────────────────────────────────────────
   const fetchLessons = useCallback(async (date: string, coachId?: string) => {
@@ -403,51 +379,7 @@ export default function DirectorPage() {
             TAB: SCHEDULE
         ══════════════════════════════════════════════════════ */}
         {activeTab === 'schedule' && (
-          <>
-            <div className="staff-page-header">
-              <div>
-                <span className="staff-section-label">Director</span>
-                <h1 className="staff-page-title">Court Schedule</h1>
-              </div>
-              <div className="date-controls">
-                <button onClick={() => setSchedDate(d => addDays(d, -1))}>‹</button>
-                <span className="date-display">{fmtDate(schedDate)}</span>
-                <button onClick={() => setSchedDate(d => addDays(d, 1))}>›</button>
-                <input type="date" className="staff-input" style={{ width: 'auto' }} value={schedDate} onChange={e => setSchedDate(e.target.value)} />
-              </div>
-            </div>
-
-            {schedLoading ? (
-              <div className="staff-empty">Loading schedule…</div>
-            ) : courtSchedule.length === 0 ? (
-              <div className="staff-empty">No schedule data for this date.</div>
-            ) : (
-              courtSchedule.map(court => (
-                <div key={court.id} className="court-row">
-                  <div>
-                    <div className="court-row-name">{court.name}{court.is_pro_court && <span style={{ color: 'var(--crimson)', marginLeft: 6, fontSize: 9 }}>PRO</span>}</div>
-                    <span className={`badge badge-${court.status}`} style={{ marginTop: 4, display: 'inline-block' }}>{court.status}</span>
-                  </div>
-                  <div className="court-row-lessons">
-                    {court.blocked_reason && <span style={{ color: 'var(--staff-muted)', fontSize: 12 }}>{court.blocked_reason}</span>}
-                    {court.lessons.length === 0 && court.status === 'available' && (
-                      <span style={{ color: 'var(--staff-dim)', fontSize: 12 }}>No lessons</span>
-                    )}
-                    {court.lessons.map(l => (
-                      <div key={l.id} className="lesson-chip">
-                        <span className="lesson-chip-time">{fmtTime(l.start_time)}</span>
-                        <span className="lesson-chip-name">
-                          {l.member ? `${l.member.last_name}` : '—'}
-                          {l.coach ? ` / ${l.coach.last_name}` : ''}
-                        </span>
-                        <span className={`badge badge-${l.status}`} style={{ fontSize: 9 }}>{l.status.replace('_',' ')}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </>
+          <DirectorSchedule coaches={coaches} />
         )}
 
         {/* ══════════════════════════════════════════════════════
