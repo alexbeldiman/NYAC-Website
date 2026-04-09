@@ -36,12 +36,14 @@ export async function POST(request: NextRequest) {
 
   const serviceClient = createServiceClient();
 
-  // Create the auth user
+  // Create the auth user — metadata is picked up by the handle_new_user trigger
+  // which auto-inserts the profiles row.
   const { data: authData, error: authError } =
     await serviceClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
+      user_metadata: { first_name, last_name, role, phone: phone ?? null },
     });
 
   if (authError) {
@@ -50,19 +52,11 @@ export async function POST(request: NextRequest) {
 
   const userId = authData.user.id;
 
-  // Insert profiles row
+  // Fetch the profile row created by the trigger
   const { data: profile, error: profileError } = await serviceClient
     .from("profiles")
-    .insert({
-      id: userId,
-      first_name,
-      last_name,
-      role,
-      phone: phone ?? null,
-      is_child: false,
-      audit_number: null,
-    })
     .select()
+    .eq("id", userId)
     .single();
 
   if (profileError) {
