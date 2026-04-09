@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       role,
       phone: phone ?? null,
       is_child: false,
-      audit_number: "STAFF",
+      audit_number: null,
     })
     .select()
     .single();
