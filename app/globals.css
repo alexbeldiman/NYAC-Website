@@ -20,6 +20,18 @@
 
   --nav-height:  72px;
   --vbar-height: 60px;
+
+  /* ─── Staff Dashboard ───────────────────────────────────────── */
+  --staff-bg:        #141414;
+  --staff-surface:   #1E1E1E;
+  --staff-card:      #242424;
+  --staff-border:    #2E2E2E;
+  --staff-border-hi: #3C3C3C;
+  --staff-text:      #FFFFFF;
+  --staff-muted:     rgba(255,255,255,0.55);
+  --staff-dim:       rgba(255,255,255,0.30);
+  --staff-sidebar:   #111111;
+  --staff-sidebar-w: 220px;
 }
 
 /* ─── Reset & Base ──────────────────────────────────────────── */
