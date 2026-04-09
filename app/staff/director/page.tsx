@@ -160,8 +160,10 @@ export default function DirectorPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'lessons') {
+    if (activeTab === 'schedule' || activeTab === 'lessons') {
       fetchCoaches();
+    }
+    if (activeTab === 'lessons') {
       fetchLessons(lessonsDate, filterCoachId || undefined);
       if (showRecurring) fetchRecurrences();
     }

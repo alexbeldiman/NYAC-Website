@@ -40,6 +40,7 @@ export default function StaffLayout({
           background: var(--staff-bg);
           color: var(--staff-text);
           font-family: var(--font-ui);
+          overflow: hidden;
         }
 
         /* ─── SIDEBAR ───────────────────────────────────────────── */
@@ -52,7 +53,7 @@ export default function StaffLayout({
           display: flex;
           flex-direction: column;
           border-right: 1px solid var(--staff-border);
-          z-index: 20;
+          z-index: 40;
         }
 
         .sidebar-top {
@@ -155,8 +156,10 @@ export default function StaffLayout({
           margin-left: var(--staff-sidebar-w);
           flex: 1;
           min-height: 100vh;
+          min-width: 0;
           background: var(--staff-bg);
           overflow-y: auto;
+          overflow-x: hidden;
         }
 
         /* ─── SHARED CONTENT CLASSES ────────────────────────────── */
