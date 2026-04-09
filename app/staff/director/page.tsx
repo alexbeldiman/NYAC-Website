@@ -431,7 +431,6 @@ export default function DirectorPage() {
                       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--crimson)'}
                       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--staff-border)'}
                     >
-                      <div style={{ fontSize: 32, marginBottom: 16 }}>🧑‍🏫</div>
                       <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, color: 'var(--staff-text)' }}>See Your Lessons</h2>
                       <p style={{ color: 'var(--staff-muted)', fontSize: 13, marginTop: 8 }}>View and manage your personal coaching schedule</p>
                     </button>
@@ -443,7 +442,6 @@ export default function DirectorPage() {
                       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--crimson)'}
                       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--staff-border)'}
                     >
-                      <div style={{ fontSize: 32, marginBottom: 16 }}>👥</div>
                       <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 24, color: 'var(--staff-text)' }}>See Other Coaches</h2>
                       <p style={{ color: 'var(--staff-muted)', fontSize: 13, marginTop: 8 }}>View the daily or weekly schedules of other staff members</p>
                     </button>
