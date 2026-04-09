@@ -14,16 +14,16 @@ interface LessonBlock {
 interface CourtRow extends Court { lessons: LessonBlock[]; }
 interface Member { id: string; first_name: string; last_name: string; audit_number: string; is_child: boolean; }
 
-type BookingType = 'member' | 'private' | 'event';
+type BookingType = 'pick' | 'member' | 'private' | 'event';
 
 interface Props { coaches: CoachOption[]; }
 
 // ─── Helpers ──────────────────────────────────────────────────
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7–20 (7am–8pm, last slot = 9pm end)
-const TIMELINE_START = 7 * 60;   // 420 min
-const TIMELINE_SPAN  = 14 * 60;  // 840 min
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am–8pm
+const TIMELINE_START = 7 * 60;
+const TIMELINE_SPAN  = 14 * 60;
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
@@ -40,14 +40,21 @@ function fmtTimeFull(iso: string) {
 }
 
 function getCalendarCells(year: number, month: number): (number | null)[] {
-  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
-  const offset = (firstDow + 6) % 7; // convert to Mon-first
+  const firstDow = new Date(year, month, 1).getDay();
+  const offset = (firstDow + 6) % 7;
   const days = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = Array(offset).fill(null);
   for (let d = 1; d <= days; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
 }
+
+const STATUS_COLOR: Record<string, string> = {
+  confirmed:      '#4ade80',
+  pending_pickup: '#fbbf24',
+  completed:      '#64748b',
+  cancelled:      '#ef4444',
+};
 
 // ─── Main Component ───────────────────────────────────────────
 export default function DirectorSchedule({ coaches }: Props) {
@@ -67,6 +74,13 @@ export default function DirectorSchedule({ coaches }: Props) {
   // Booking modal
   const [bookingType, setBookingType] = useState<BookingType | null>(null);
 
+  // Now indicator
+  const [nowMin, setNowMin] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); });
+  useEffect(() => {
+    const t = setInterval(() => { const d = new Date(); setNowMin(d.getHours() * 60 + d.getMinutes()); }, 60000);
+    return () => clearInterval(t);
+  }, []);
+
   // ── Member booking ──────────────────────────────────────────
   const [mStep, setMStep]             = useState<1|2>(1);
   const [mVerifyForm, setMVerifyForm] = useState({ last_name: '', audit_number: '' });
@@ -76,7 +90,7 @@ export default function DirectorSchedule({ coaches }: Props) {
   const [mLoading, setMLoading]       = useState(false);
   const [mMsg, setMMsg]               = useState<{ type: 'success'|'error'; text: string } | null>(null);
 
-  // ── Private booking (assign court to existing lesson) ───────
+  // ── Private booking ─────────────────────────────────────────
   const [pDate, setPDate]           = useState(todayStr());
   const [pLessons, setPLessons]     = useState<LessonBlock[]>([]);
   const [pSelected, setPSelected]   = useState<LessonBlock | null>(null);
@@ -106,7 +120,7 @@ export default function DirectorSchedule({ coaches }: Props) {
     if (view === 'day') fetchDay(selectedDate);
   }, [view, selectedDate, fetchDay]);
 
-  // ─── Fetch all courts (for modal) ────────────────────────────
+  // ─── Fetch all courts ────────────────────────────────────────
   const fetchCourts = useCallback(async () => {
     try {
       const res = await fetch('/api/courts');
@@ -116,7 +130,7 @@ export default function DirectorSchedule({ coaches }: Props) {
   }, []);
 
   useEffect(() => {
-    if (bookingType) fetchCourts();
+    if (bookingType && bookingType !== 'pick') fetchCourts();
   }, [bookingType, fetchCourts]);
 
   // ─── Fetch unassigned lessons (private booking) ──────────────
@@ -134,20 +148,19 @@ export default function DirectorSchedule({ coaches }: Props) {
     if (bookingType === 'private') fetchPrivateLessons(pDate);
   }, [bookingType, pDate]);
 
-  // ─── Open day from calendar ───────────────────────────────────
-  function openDay(day: number) {
-    setSelectedDate(dateStr(calYear, calMonth, day));
-    setView('day');
-  }
-
   // ─── Calendar navigation ─────────────────────────────────────
-  function prevMonth() {
-    if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); }
-    else setCalMonth(m => m - 1);
-  }
-  function nextMonth() {
-    if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); }
-    else setCalMonth(m => m + 1);
+  function openDay(day: number) { setSelectedDate(dateStr(calYear, calMonth, day)); setView('day'); }
+  function prevMonth() { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); }
+  function nextMonth() { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); }
+
+  // ─── Reset modal ─────────────────────────────────────────────
+  function closeModal() {
+    setBookingType(null);
+    setMStep(1); setMSelected(null); setMResults([]);
+    setMVerifyForm({ last_name: '', audit_number: '' });
+    setMBookForm({ start_time: '', duration_minutes: 60, coach_id: '', court_id: '' });
+    setMMsg(null); setPMsg(null); setEMsg(null);
+    setPSelected(null); setPCourtId('');
   }
 
   // ─── Member booking: verify ───────────────────────────────────
@@ -187,7 +200,6 @@ export default function DirectorSchedule({ coaches }: Props) {
       const d = await res.json();
       if (!res.ok) { setMMsg({ type: 'error', text: d.error ?? 'Booking failed' }); return; }
 
-      // Assign court if selected
       if (mBookForm.court_id && d.id) {
         await fetch(`/api/lessons/${d.id}/court`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -241,98 +253,269 @@ export default function DirectorSchedule({ coaches }: Props) {
     finally { setELoading(false); }
   }
 
-  // ─── Render helpers ───────────────────────────────────────────
+  // ─── Computed ─────────────────────────────────────────────────
   const today = todayStr();
   const cells = getCalendarCells(calYear, calMonth);
+  const unassigned = courtSchedule.flatMap(c => c.lessons).filter(l => !l.court_id);
+  const nowPct = ((nowMin - TIMELINE_START) / TIMELINE_SPAN) * 100;
+  const showNow = selectedDate === today && nowPct >= 0 && nowPct <= 100;
 
-  // ─── Lesson block position ────────────────────────────────────
   function lessonStyle(lesson: LessonBlock): React.CSSProperties {
     const startMin = minutesSinceMidnight(lesson.start_time);
     const left = Math.max(0, (startMin - TIMELINE_START) / TIMELINE_SPAN * 100);
     const width = Math.min(lesson.duration_minutes / TIMELINE_SPAN * 100, 100 - left);
-    const colors: Record<string, string> = {
-      confirmed: '#4ade80', pending_pickup: '#fbbf24', completed: '#94a3b8',
-    };
-    const borderColor = colors[lesson.status] ?? 'var(--crimson)';
+    const borderColor = STATUS_COLOR[lesson.status] ?? 'var(--crimson)';
     return { left: `${left}%`, width: `${width}%`, borderLeftColor: borderColor };
   }
 
-  // Collect unassigned lessons
-  const unassigned = courtSchedule.flatMap(c => c.lessons).filter(l => !l.court_id);
-
+  // ─────────────────────────────────────────────────────────────
   return (
     <>
       <style suppressHydrationWarning>{`
-        /* ─── CALENDAR ──────────────────────────────────────── */
+
+        /* ══════════════════════════════════════════════════════
+           SCHEDULE HEADER
+        ══════════════════════════════════════════════════════ */
+        .sch-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 28px;
+          gap: 16px;
+        }
+        .sch-header-left { display: flex; flex-direction: column; gap: 2px; }
+        .sch-eyebrow {
+          font-family: var(--font-ui);
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: var(--crimson);
+        }
+        .sch-title {
+          font-family: var(--font-label);
+          font-size: 26px;
+          font-weight: 400;
+          color: var(--staff-text);
+          line-height: 1;
+        }
+        .sch-header-actions { display: flex; gap: 8px; align-items: center; }
+
+        /* ══════════════════════════════════════════════════════
+           CALENDAR
+        ══════════════════════════════════════════════════════ */
         .cal-nav {
-          display: flex; align-items: center; justify-content: space-between;
-          margin-bottom: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
         }
-        .cal-nav-title {
-          font-family: var(--font-label); font-size: 22px;
-          color: var(--staff-text); font-weight: 400;
+        .cal-month-label {
+          font-family: var(--font-label);
+          font-size: 18px;
+          color: var(--staff-muted);
+          font-weight: 400;
+          letter-spacing: 0.02em;
         }
-        .cal-nav-btn {
-          background: var(--staff-card); border: 1px solid var(--staff-border);
-          color: var(--staff-muted); width: 36px; height: 36px;
+        .cal-arrow {
+          background: none;
+          border: 1px solid var(--staff-border);
+          color: var(--staff-dim);
+          width: 32px; height: 32px;
           display: flex; align-items: center; justify-content: center;
-          cursor: pointer; font-size: 16px; transition: background 0.15s;
+          cursor: pointer;
+          font-size: 15px;
+          transition: border-color 0.15s, color 0.15s;
         }
-        .cal-nav-btn:hover { background: var(--staff-surface); color: var(--staff-text); }
+        .cal-arrow:hover { border-color: var(--staff-border-hi); color: var(--staff-text); }
 
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-
+        .cal-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 2px;
+        }
         .cal-dow {
-          font-family: var(--font-ui); font-size: 10px; font-weight: 600;
-          letter-spacing: 0.14em; text-transform: uppercase;
-          color: var(--staff-dim); text-align: center; padding: 8px 0 12px;
+          font-family: var(--font-ui);
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: var(--staff-dim);
+          text-align: center;
+          padding: 6px 0 10px;
         }
-
         .cal-cell {
-          aspect-ratio: 1 / 0.85; background: var(--staff-card);
-          border: 1px solid var(--staff-border); display: flex;
-          align-items: flex-start; justify-content: flex-end;
-          padding: 10px 12px; cursor: pointer;
-          transition: background 0.15s, border-color 0.15s;
-          font-family: var(--font-ui); font-size: 14px; font-weight: 500;
-          color: var(--staff-muted); position: relative;
+          aspect-ratio: 1 / 0.82;
+          background: var(--staff-card);
+          border: 1px solid var(--staff-border);
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          padding: 8px 10px;
+          cursor: pointer;
+          transition: background 0.12s, border-color 0.12s, color 0.12s;
+          font-family: var(--font-ui);
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--staff-muted);
+          position: relative;
+          user-select: none;
         }
-        .cal-cell:hover { background: var(--staff-surface); color: var(--staff-text); border-color: var(--staff-border-hi); }
-        .cal-cell.today { border-color: var(--crimson); color: var(--crimson); }
-        .cal-cell.selected { background: var(--crimson); color: white; border-color: var(--crimson); }
+        .cal-cell:hover {
+          background: var(--staff-surface);
+          color: var(--staff-text);
+          border-color: var(--staff-border-hi);
+          z-index: 1;
+        }
+        .cal-cell.today {
+          color: var(--crimson);
+          border-color: rgba(200,16,46,0.45);
+        }
+        .cal-cell.today::after {
+          content: '';
+          position: absolute;
+          top: 8px; left: 10px;
+          width: 5px; height: 5px;
+          background: var(--crimson);
+          border-radius: 50%;
+        }
+        .cal-cell.selected {
+          background: var(--crimson);
+          color: white;
+          border-color: var(--crimson);
+        }
         .cal-cell.selected:hover { background: var(--crimson-dk); }
-        .cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
-        .cal-cell.weekend { background: rgba(255,255,255,0.015); }
+        .cal-cell.empty {
+          background: transparent;
+          border-color: transparent;
+          cursor: default;
+          pointer-events: none;
+        }
+        .cal-cell.weekend { background: rgba(255,255,255,0.012); }
+        .cal-cell.weekend.empty { background: transparent; }
 
-        /* ─── TIMELINE ──────────────────────────────────────── */
+        /* ══════════════════════════════════════════════════════
+           DAY VIEW TOOLBAR
+        ══════════════════════════════════════════════════════ */
+        .day-toolbar {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+        }
+        .day-legend {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-left: auto;
+        }
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--staff-dim);
+        }
+        .legend-dot {
+          width: 8px; height: 8px;
+          border-radius: 1px;
+        }
+
+        /* ══════════════════════════════════════════════════════
+           TIMELINE
+        ══════════════════════════════════════════════════════ */
         .timeline-wrap { overflow-x: auto; min-width: 0; }
 
         .timeline-header {
-          display: flex; border-bottom: 1px solid var(--staff-border);
-          margin-bottom: 4px; padding-left: 110px;
-          position: sticky; top: 0; background: var(--staff-bg); z-index: 2;
+          display: flex;
+          border-bottom: 1px solid var(--staff-border);
+          padding-left: 120px;
+          position: sticky;
+          top: 0;
+          background: var(--staff-bg);
+          z-index: 2;
+          margin-bottom: 0;
         }
-        .timeline-hour-label {
-          font-family: var(--font-ui); font-size: 10px; font-weight: 600;
-          color: var(--staff-dim); letter-spacing: 0.1em;
-          text-align: left; padding: 6px 0;
-          flex: none; width: calc(100% / 14);
+        .timeline-hour {
+          font-family: var(--font-ui);
+          font-size: 9px;
+          font-weight: 700;
+          color: var(--staff-dim);
+          letter-spacing: 0.12em;
+          text-align: left;
+          padding: 7px 0 7px;
+          flex: none;
+          width: calc(100% / 14);
+        }
+
+        .timeline-section-label {
+          font-family: var(--font-ui);
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: var(--staff-dim);
+          padding: 14px 0 5px;
+          border-top: 1px solid var(--staff-border);
+          margin-top: 4px;
+        }
+        .timeline-section-label:first-of-type {
+          border-top: none;
+          margin-top: 0;
         }
 
         .timeline-row {
-          display: flex; align-items: stretch; min-height: 44px;
+          display: flex;
+          align-items: stretch;
+          min-height: 46px;
           border-bottom: 1px solid var(--staff-border);
         }
-        .timeline-court-name {
-          font-family: var(--font-ui); font-size: 11px; font-weight: 600;
-          letter-spacing: 0.06em; text-transform: uppercase;
-          color: var(--staff-muted); width: 110px; flex-shrink: 0;
-          display: flex; align-items: center; padding-right: 12px;
-          white-space: nowrap; overflow: hidden;
+        .timeline-row:last-child { border-bottom: none; }
+        .timeline-row:nth-child(even) .timeline-track {
+          background-image: repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent calc(100% / 14 - 1px),
+            var(--staff-border) calc(100% / 14 - 1px),
+            var(--staff-border) calc(100% / 14)
+          ), linear-gradient(rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 100%);
         }
+
+        .timeline-court-name {
+          font-family: var(--font-ui);
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--staff-muted);
+          width: 120px;
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding-right: 14px;
+          gap: 2px;
+        }
+        .timeline-court-status {
+          font-size: 8px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+        }
+        .timeline-court-status.blocked { color: var(--crimson); }
+        .timeline-court-status.maintenance { color: #fbbf24; }
+        .timeline-court-status.pro { color: rgba(255,255,255,0.28); }
+
         .timeline-track {
-          flex: 1; position: relative; min-height: 44px;
-          background: repeating-linear-gradient(
+          flex: 1;
+          position: relative;
+          min-height: 46px;
+          min-width: 700px;
+          background-image: repeating-linear-gradient(
             90deg,
             transparent 0,
             transparent calc(100% / 14 - 1px),
@@ -340,106 +523,299 @@ export default function DirectorSchedule({ coaches }: Props) {
             var(--staff-border) calc(100% / 14)
           );
         }
+
+        /* Now indicator */
+        .timeline-now {
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 1px;
+          background: rgba(200,16,46,0.7);
+          z-index: 3;
+          pointer-events: none;
+        }
+        .timeline-now::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: -3px;
+          transform: translateY(-50%);
+          width: 7px; height: 7px;
+          background: var(--crimson);
+          border-radius: 50%;
+        }
+
+        .timeline-blocked-overlay {
+          position: absolute;
+          inset: 8px 6px;
+          background: rgba(200,16,46,0.05);
+          border: 1px dashed rgba(200,16,46,0.2);
+          display: flex;
+          align-items: center;
+          padding-left: 12px;
+        }
+        .timeline-blocked-label {
+          font-family: var(--font-ui);
+          font-size: 10px;
+          color: rgba(200,16,46,0.5);
+          letter-spacing: 0.08em;
+          font-weight: 600;
+        }
+
         .timeline-block {
-          position: absolute; top: 6px; bottom: 6px;
-          background: var(--staff-surface); border-left: 3px solid var(--crimson);
-          padding: 0 8px; display: flex; align-items: center; gap: 6px;
-          overflow: hidden; min-width: 40px;
-          font-family: var(--font-ui); font-size: 11px; color: var(--staff-muted);
+          position: absolute;
+          top: 7px; bottom: 7px;
+          background: rgba(30,30,30,0.95);
+          border-left: 3px solid var(--crimson);
+          padding: 0 10px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          overflow: hidden;
+          min-width: 36px;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          color: var(--staff-muted);
           white-space: nowrap;
+          backdrop-filter: blur(4px);
+          transition: background 0.15s;
         }
-        .timeline-block-name { color: var(--staff-text); font-weight: 600; flex-shrink: 0; }
-
-        .timeline-section-label {
-          font-family: var(--font-ui); font-size: 10px; font-weight: 600;
-          letter-spacing: 0.16em; text-transform: uppercase; color: var(--staff-dim);
-          padding: 12px 0 6px;
+        .timeline-block:hover { background: rgba(40,40,40,0.98); color: var(--staff-text); }
+        .timeline-block-name {
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--staff-text);
+          flex-shrink: 0;
         }
+        .timeline-block-coach { opacity: 0.7; flex-shrink: 0; }
+        .timeline-block-time { opacity: 0.55; font-size: 9px; }
 
-        .unassigned-row .timeline-track { background: repeating-linear-gradient(
-          90deg, transparent 0, transparent calc(100% / 14 - 1px),
-          var(--staff-border) calc(100% / 14 - 1px), var(--staff-border) calc(100% / 14)
-        ); }
         .unassigned-block { border-left-color: #fbbf24 !important; }
 
-        /* ─── BOOKING MODAL ─────────────────────────────────── */
+        /* ══════════════════════════════════════════════════════
+           BOOKING MODAL
+        ══════════════════════════════════════════════════════ */
         .booking-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-          z-index: 100; display: flex; align-items: center; justify-content: center;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.8);
+          z-index: 100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: 24px;
+          backdrop-filter: blur(4px);
         }
         .booking-modal {
-          background: var(--staff-surface); border: 1px solid var(--staff-border);
-          width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+          background: var(--staff-surface);
+          border: 1px solid var(--staff-border-hi);
+          width: 100%;
+          max-width: 500px;
+          max-height: 88vh;
+          overflow-y: auto;
           position: relative;
         }
         .booking-modal::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0;
-          height: 3px; background: var(--crimson);
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 2px;
+          background: var(--crimson);
         }
         .booking-modal-header {
-          padding: 24px 28px 20px;
+          padding: 22px 24px 18px;
           border-bottom: 1px solid var(--staff-border);
-          display: flex; align-items: center; justify-content: space-between;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
         }
         .booking-modal-title {
-          font-family: var(--font-label); font-size: 20px; color: var(--staff-text);
+          font-family: var(--font-label);
+          font-size: 20px;
+          color: var(--staff-text);
+          font-weight: 400;
         }
-        .booking-close {
-          background: none; border: none; color: var(--staff-dim);
-          font-size: 20px; cursor: pointer; line-height: 1; padding: 4px;
-          transition: color 0.15s;
-        }
-        .booking-close:hover { color: var(--staff-text); }
-        .booking-modal-body { padding: 24px 28px; }
-
-        .booking-type-grid {
-          display: grid; grid-template-columns: 1fr; gap: 10px;
-        }
-        .booking-type-btn {
-          background: var(--staff-card); border: 1px solid var(--staff-border);
-          padding: 18px 20px; text-align: left; cursor: pointer;
-          transition: border-color 0.15s, background 0.15s;
-          display: flex; align-items: center; gap: 14px;
-        }
-        .booking-type-btn:hover { border-color: var(--crimson); background: rgba(200,16,46,0.05); }
-        .booking-type-icon {
-          width: 36px; height: 36px; background: rgba(200,16,46,0.12);
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; font-size: 16px;
-        }
-        .booking-type-title {
-          font-family: var(--font-ui); font-size: 12px; font-weight: 600;
-          letter-spacing: 0.1em; text-transform: uppercase; color: var(--staff-text);
+        .booking-modal-crumb {
+          font-family: var(--font-ui);
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: var(--staff-dim);
           margin-bottom: 3px;
         }
-        .booking-type-desc {
-          font-family: var(--font-body); font-size: 13px; color: var(--staff-muted);
+        .booking-close {
+          background: rgba(255,255,255,0.06);
+          border: none;
+          color: var(--staff-dim);
+          width: 30px; height: 30px;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          font-size: 18px;
+          line-height: 1;
+          flex-shrink: 0;
+          transition: background 0.15s, color 0.15s;
+        }
+        .booking-close:hover { background: rgba(255,255,255,0.12); color: var(--staff-text); }
+
+        .booking-modal-body { padding: 22px 24px; }
+
+        /* ── Type picker ──────────────────────────────────── */
+        .booking-pick-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .booking-pick-btn {
+          background: var(--staff-card);
+          border: 1px solid var(--staff-border);
+          padding: 16px 18px;
+          text-align: left;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .booking-pick-btn:hover {
+          border-color: var(--crimson);
+          background: rgba(200,16,46,0.04);
+        }
+        .booking-pick-icon {
+          width: 38px; height: 38px;
+          background: rgba(200,16,46,0.1);
+          color: var(--crimson);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          font-size: 18px;
+        }
+        .booking-pick-title {
+          font-family: var(--font-ui);
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--staff-text);
+          margin-bottom: 2px;
+        }
+        .booking-pick-desc {
+          font-family: var(--font-ui);
+          font-size: 11px;
+          color: var(--staff-dim);
         }
 
+        /* ── Shared form styles ───────────────────────────── */
         .booking-back {
-          background: none; border: none; color: var(--staff-dim); cursor: pointer;
-          font-family: var(--font-ui); font-size: 11px; font-weight: 600;
-          letter-spacing: 0.12em; text-transform: uppercase; padding: 0 0 16px;
-          display: flex; align-items: center; gap: 6px;
+          background: none;
+          border: none;
+          color: var(--staff-dim);
+          cursor: pointer;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          padding: 0 0 18px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
           transition: color 0.15s;
         }
         .booking-back:hover { color: var(--staff-muted); }
+
+        .booking-member-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(200,16,46,0.08);
+          border: 1px solid rgba(200,16,46,0.2);
+          padding: 8px 14px;
+          margin-bottom: 18px;
+        }
+        .booking-member-chip-name {
+          font-family: var(--font-label);
+          font-size: 15px;
+          color: var(--staff-text);
+        }
+
+        .lesson-pick-btn {
+          display: block;
+          width: 100%;
+          text-align: left;
+          background: var(--staff-card);
+          border: 1px solid var(--staff-border);
+          padding: 11px 14px;
+          margin-bottom: 6px;
+          cursor: pointer;
+          font-family: var(--font-ui);
+          font-size: 11px;
+          color: var(--staff-muted);
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .lesson-pick-btn:hover { border-color: var(--staff-border-hi); background: var(--staff-surface); color: var(--staff-text); }
+        .lesson-pick-btn.selected { border-color: var(--crimson); background: rgba(200,16,46,0.05); color: var(--staff-text); }
+        .lesson-pick-name { font-weight: 700; color: var(--staff-text); margin-right: 6px; }
+
+        .court-check-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 6px;
+          margin-top: 8px;
+        }
+        .court-check-label {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          cursor: pointer;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--staff-muted);
+          padding: 8px 10px;
+          border: 1px solid var(--staff-border);
+          background: var(--staff-card);
+          transition: border-color 0.12s, background 0.12s, color 0.12s;
+          user-select: none;
+        }
+        .court-check-label:has(input:checked) {
+          border-color: var(--crimson);
+          background: rgba(200,16,46,0.06);
+          color: var(--staff-text);
+        }
+        .court-check-label input { accent-color: var(--crimson); }
+
+        .modal-hint {
+          font-family: var(--font-ui);
+          font-size: 10px;
+          color: var(--staff-dim);
+          line-height: 1.6;
+          margin-bottom: 16px;
+        }
+
+        @media (max-width: 640px) {
+          .cal-cell { font-size: 12px; }
+          .timeline-court-name { width: 80px; font-size: 9px; }
+          .day-legend { display: none; }
+        }
       `}</style>
 
       {/* ── Header ──────────────────────────────────────────── */}
-      <div className="staff-page-header">
-        <div>
-          <span className="staff-section-label">Director</span>
-          <h1 className="staff-page-title">
-            {view === 'calendar' ? `${MONTHS[calMonth]} ${calYear}` : fmtDate(selectedDate)}
+      <div className="sch-header">
+        <div className="sch-header-left">
+          <span className="sch-eyebrow">Schedule</span>
+          <h1 className="sch-title">
+            {view === 'calendar'
+              ? `${MONTHS[calMonth]} ${calYear}`
+              : fmtDate(selectedDate)}
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div className="sch-header-actions">
           {view === 'day' && (
             <button className="btn-staff-ghost" onClick={() => setView('calendar')}>← Calendar</button>
           )}
-          <button className="btn-staff-primary" onClick={() => { setBookingType(null); setBookingType('member'); }}>
+          <button className="btn-staff-primary" onClick={() => setBookingType('pick')}>
             + Book Court
           </button>
         </div>
@@ -451,9 +827,9 @@ export default function DirectorSchedule({ coaches }: Props) {
       {view === 'calendar' && (
         <>
           <div className="cal-nav">
-            <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
-            <span className="cal-nav-title">{MONTHS[calMonth]} {calYear}</span>
-            <button className="cal-nav-btn" onClick={nextMonth}>›</button>
+            <button className="cal-arrow" onClick={prevMonth}>‹</button>
+            <span className="cal-month-label">{MONTHS[calMonth]} {calYear}</span>
+            <button className="cal-arrow" onClick={nextMonth}>›</button>
           </div>
 
           <div className="cal-grid">
@@ -467,7 +843,11 @@ export default function DirectorSchedule({ coaches }: Props) {
               return (
                 <div
                   key={i}
-                  className={`cal-cell${isSelected ? ' selected' : isToday ? ' today' : ''}${isWeekend && !isSelected ? ' weekend' : ''}`}
+                  className={[
+                    'cal-cell',
+                    isSelected ? 'selected' : isToday ? 'today' : '',
+                    isWeekend && !isSelected ? 'weekend' : '',
+                  ].filter(Boolean).join(' ')}
                   onClick={() => openDay(day)}
                   title={`View ${fmtDate(ds)}`}
                 >
@@ -483,126 +863,219 @@ export default function DirectorSchedule({ coaches }: Props) {
           DAY VIEW (TIMELINE)
       ══════════════════════════════════════════════════════ */}
       {view === 'day' && (
-        <div className="timeline-wrap">
-          {dayLoading ? (
-            <div className="staff-empty">Loading schedule…</div>
-          ) : (
-            <>
-              {/* Time header */}
-              <div className="timeline-header">
-                {HOURS.map(h => (
-                  <div key={h} className="timeline-hour-label">{fmtHour(h)}</div>
-                ))}
-              </div>
+        <>
+          <div className="day-toolbar">
+            <div className="day-legend">
+              {[
+                { label: 'Confirmed',    color: '#4ade80' },
+                { label: 'Pending',      color: '#fbbf24' },
+                { label: 'Completed',    color: '#64748b' },
+                { label: 'Unassigned',   color: '#fbbf24' },
+              ].map(({ label, color }) => (
+                <div key={label} className="legend-item">
+                  <div className="legend-dot" style={{ background: color }} />
+                  {label}
+                </div>
+              ))}
+            </div>
+          </div>
 
-              {/* Unassigned lessons row */}
-              {unassigned.length > 0 && (
-                <>
-                  <div className="timeline-section-label">Unassigned</div>
-                  <div className="timeline-row unassigned-row">
-                    <div className="timeline-court-name" style={{ color: '#fbbf24' }}>No Court</div>
-                    <div className="timeline-track" style={{ minWidth: 700 }}>
-                      {unassigned.map(l => (
-                        <div key={l.id} className="timeline-block unassigned-block" style={lessonStyle(l)}>
-                          <span className="timeline-block-name">
-                            {l.member ? l.member.last_name : '?'}
-                          </span>
-                          <span>{fmtTimeFull(l.start_time)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+          <div className="timeline-wrap">
+            {dayLoading ? (
+              <div className="staff-empty">Loading schedule…</div>
+            ) : (
+              <>
+                {/* Time header */}
+                <div className="timeline-header">
+                  {HOURS.map(h => (
+                    <div key={h} className="timeline-hour">{fmtHour(h)}</div>
+                  ))}
+                </div>
 
-              {/* Courts */}
-              {courtSchedule.length === 0 ? (
-                <div className="staff-empty">No schedule data for this date.</div>
-              ) : (
-                <>
-                  <div className="timeline-section-label">Courts</div>
-                  {courtSchedule.map(court => (
-                    <div key={court.id} className="timeline-row">
-                      <div className="timeline-court-name">
-                        {court.name}
-                        {court.status !== 'available' && (
-                          <span style={{ color: court.status === 'blocked' ? 'var(--crimson)' : '#fbbf24', marginLeft: 4, fontSize: 9 }}>●</span>
-                        )}
+                {/* Unassigned lessons */}
+                {unassigned.length > 0 && (
+                  <>
+                    <div className="timeline-section-label">Unassigned</div>
+                    <div className="timeline-row">
+                      <div className="timeline-court-name" style={{ color: '#fbbf24' }}>
+                        No Court
                       </div>
-                      <div className="timeline-track" style={{ minWidth: 700 }}>
-                        {court.status !== 'available' && court.lessons.length === 0 && (
-                          <div style={{ position: 'absolute', inset: '10px 8px', background: 'rgba(200,16,46,0.07)', border: '1px dashed rgba(200,16,46,0.25)', display: 'flex', alignItems: 'center', paddingLeft: 12 }}>
-                            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'rgba(200,16,46,0.6)', letterSpacing: '0.08em' }}>
-                              {court.blocked_reason ?? court.status}
-                            </span>
-                          </div>
+                      <div className="timeline-track">
+                        {showNow && (
+                          <div className="timeline-now" style={{ left: `${nowPct}%` }} />
                         )}
-                        {court.lessons.map(l => (
-                          <div key={l.id} className="timeline-block" style={lessonStyle(l)}>
+                        {unassigned.map(l => (
+                          <div key={l.id} className="timeline-block unassigned-block" style={lessonStyle(l)}>
                             <span className="timeline-block-name">
                               {l.member ? l.member.last_name : '?'}
                             </span>
-                            {l.coach && <span>/ {l.coach.last_name}</span>}
-                            <span>{fmtTimeFull(l.start_time)}</span>
+                            <span className="timeline-block-time">{fmtTimeFull(l.start_time)}</span>
                           </div>
                         ))}
                       </div>
                     </div>
-                  ))}
-                </>
-              )}
-            </>
-          )}
-        </div>
+                  </>
+                )}
+
+                {/* Courts */}
+                {courtSchedule.length === 0 ? (
+                  <div className="staff-empty">No schedule data for this date.</div>
+                ) : (
+                  <>
+                    <div className="timeline-section-label">Courts</div>
+                    {courtSchedule.map(court => (
+                      <div key={court.id} className="timeline-row">
+                        <div className="timeline-court-name">
+                          <span>{court.name}</span>
+                          {court.is_pro_court && (
+                            <span className="timeline-court-status pro">Pro</span>
+                          )}
+                          {court.status === 'blocked' && (
+                            <span className="timeline-court-status blocked">Blocked</span>
+                          )}
+                          {court.status === 'maintenance' && (
+                            <span className="timeline-court-status maintenance">Maint.</span>
+                          )}
+                        </div>
+                        <div className="timeline-track">
+                          {showNow && (
+                            <div className="timeline-now" style={{ left: `${nowPct}%` }} />
+                          )}
+                          {court.status !== 'available' && court.lessons.length === 0 && (
+                            <div className="timeline-blocked-overlay">
+                              <span className="timeline-blocked-label">
+                                {court.blocked_reason ?? court.status}
+                              </span>
+                            </div>
+                          )}
+                          {court.lessons.map(l => (
+                            <div key={l.id} className="timeline-block" style={lessonStyle(l)}>
+                              <span className="timeline-block-name">
+                                {l.member ? l.member.last_name : '?'}
+                              </span>
+                              {l.coach && (
+                                <span className="timeline-block-coach">/ {l.coach.last_name}</span>
+                              )}
+                              <span className="timeline-block-time">{fmtTimeFull(l.start_time)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {/* ══════════════════════════════════════════════════════
           BOOKING MODAL
       ══════════════════════════════════════════════════════ */}
       {bookingType !== null && (
-        <div className="booking-overlay" onClick={e => { if (e.target === e.currentTarget) { setBookingType(null); setMStep(1); setMMsg(null); setPMsg(null); setEMsg(null); }}}>
+        <div
+          className="booking-overlay"
+          onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
+        >
           <div className="booking-modal">
             <div className="booking-modal-header">
-              <span className="booking-modal-title">
-                {bookingType === 'member'  ? 'Book — For a Member'   :
-                 bookingType === 'private' ? 'Book — Scheduled Private' :
-                                             'Book — Event'}
-              </span>
-              <button className="booking-close" onClick={() => { setBookingType(null); setMStep(1); setMMsg(null); setPMsg(null); setEMsg(null); }}>×</button>
+              <div>
+                {bookingType !== 'pick' && (
+                  <div className="booking-modal-crumb">
+                    {bookingType === 'member'  ? 'Book · Member'  :
+                     bookingType === 'private' ? 'Book · Scheduled' :
+                                                 'Book · Event'}
+                  </div>
+                )}
+                <span className="booking-modal-title">
+                  {bookingType === 'pick'    ? 'Book Court'            :
+                   bookingType === 'member'  ? (mStep === 1 ? 'Find Member' : `${mSelected?.first_name} ${mSelected?.last_name}`) :
+                   bookingType === 'private' ? 'Assign Court'          :
+                                               'Block for Event'}
+                </span>
+              </div>
+              <button className="booking-close" onClick={closeModal}>×</button>
             </div>
 
             <div className="booking-modal-body">
 
-              {/* ── Type picker (when we open modal fresh via "+ Book Court") ── */}
-              {/* We show the type picker first by routing through a null/initial state */}
-              {/* Actually we set bookingType directly — so show 3-choice first */}
+              {/* ── TYPE PICKER ─────────────────────────────── */}
+              {bookingType === 'pick' && (
+                <div className="booking-pick-grid">
+                  <button className="booking-pick-btn" onClick={() => setBookingType('member')}>
+                    <div className="booking-pick-icon">👤</div>
+                    <div>
+                      <div className="booking-pick-title">For a Member</div>
+                      <div className="booking-pick-desc">Verify and create a new lesson booking</div>
+                    </div>
+                  </button>
+                  <button className="booking-pick-btn" onClick={() => setBookingType('private')}>
+                    <div className="booking-pick-icon">📋</div>
+                    <div>
+                      <div className="booking-pick-title">Assign Court</div>
+                      <div className="booking-pick-desc">Assign a court to a scheduled lesson</div>
+                    </div>
+                  </button>
+                  <button className="booking-pick-btn" onClick={() => setBookingType('event')}>
+                    <div className="booking-pick-icon">🎾</div>
+                    <div>
+                      <div className="booking-pick-title">Block for Event</div>
+                      <div className="booking-pick-desc">Reserve courts for a tournament or club event</div>
+                    </div>
+                  </button>
+                </div>
+              )}
 
-              {/* ── MEMBER FLOW ────────────────────────────── */}
+              {/* ── MEMBER FLOW ─────────────────────────────── */}
               {bookingType === 'member' && (
                 <>
-                  {mMsg && <div className={mMsg.type === 'success' ? 'staff-success' : 'staff-error'}>{mMsg.text}</div>}
+                  <button className="booking-back" onClick={() => setBookingType('pick')}>← Back</button>
+                  {mMsg && (
+                    <div className={mMsg.type === 'success' ? 'staff-success' : 'staff-error'} style={{ marginBottom: 16 }}>
+                      {mMsg.text}
+                    </div>
+                  )}
 
                   {mStep === 1 ? (
                     <>
                       <div className="form-row">
                         <div className="form-group">
                           <label className="staff-label-text">Last Name</label>
-                          <input className="staff-input" value={mVerifyForm.last_name} onChange={e => setMVerifyForm(p => ({ ...p, last_name: e.target.value }))} placeholder="Smith" />
+                          <input
+                            className="staff-input"
+                            value={mVerifyForm.last_name}
+                            onChange={e => setMVerifyForm(p => ({ ...p, last_name: e.target.value }))}
+                            placeholder="Smith"
+                          />
                         </div>
                         <div className="form-group">
                           <label className="staff-label-text">Audit Number</label>
-                          <input className="staff-input" value={mVerifyForm.audit_number} onChange={e => setMVerifyForm(p => ({ ...p, audit_number: e.target.value }))} placeholder="12345" />
+                          <input
+                            className="staff-input"
+                            value={mVerifyForm.audit_number}
+                            onChange={e => setMVerifyForm(p => ({ ...p, audit_number: e.target.value }))}
+                            placeholder="12345"
+                          />
                         </div>
                       </div>
-                      <button className="btn-staff-primary" disabled={mLoading || !mVerifyForm.last_name || !mVerifyForm.audit_number} onClick={verifyMember}>
+                      <button
+                        className="btn-staff-primary"
+                        disabled={mLoading || !mVerifyForm.last_name || !mVerifyForm.audit_number}
+                        onClick={verifyMember}
+                      >
                         {mLoading ? 'Looking up…' : 'Find Member'}
                       </button>
                       {mResults.length > 1 && (
                         <div style={{ marginTop: 20 }}>
                           <div className="staff-label-text" style={{ marginBottom: 10 }}>Select member</div>
                           {mResults.map(m => (
-                            <button key={m.id} className="btn-staff-ghost" style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 8, padding: '10px 16px' }}
-                              onClick={() => { setMSelected(m); setMStep(2); }}>
+                            <button
+                              key={m.id}
+                              className="btn-staff-ghost"
+                              style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 6, padding: '10px 14px' }}
+                              onClick={() => { setMSelected(m); setMStep(2); }}
+                            >
                               {m.first_name} {m.last_name} — #{m.audit_number}{m.is_child ? ' (child)' : ''}
                             </button>
                           ))}
@@ -612,37 +1085,69 @@ export default function DirectorSchedule({ coaches }: Props) {
                   ) : (
                     <>
                       <button className="booking-back" onClick={() => { setMStep(1); setMSelected(null); }}>← Back</button>
-                      <div style={{ fontFamily: 'var(--font-label)', fontSize: 16, color: 'var(--staff-text)', marginBottom: 20 }}>
-                        {mSelected?.first_name} {mSelected?.last_name}
+                      <div className="booking-member-chip">
+                        <span className="booking-member-chip-name">
+                          {mSelected?.first_name} {mSelected?.last_name}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 10, color: 'var(--staff-dim)' }}>
+                          #{mSelected?.audit_number}
+                        </span>
                       </div>
                       <div className="form-group">
                         <label className="staff-label-text">Start Date &amp; Time</label>
-                        <input type="datetime-local" className="staff-input" value={mBookForm.start_time} onChange={e => setMBookForm(p => ({ ...p, start_time: e.target.value }))} />
+                        <input
+                          type="datetime-local"
+                          className="staff-input"
+                          value={mBookForm.start_time}
+                          onChange={e => setMBookForm(p => ({ ...p, start_time: e.target.value }))}
+                        />
                       </div>
                       <div className="form-row">
                         <div className="form-group">
                           <label className="staff-label-text">Duration</label>
-                          <select className="staff-input" value={mBookForm.duration_minutes} onChange={e => setMBookForm(p => ({ ...p, duration_minutes: parseInt(e.target.value) }))}>
-                            <option value={30}>30 min</option><option value={60}>60 min</option>
-                            <option value={90}>90 min</option><option value={120}>120 min</option>
+                          <select
+                            className="staff-input"
+                            value={mBookForm.duration_minutes}
+                            onChange={e => setMBookForm(p => ({ ...p, duration_minutes: parseInt(e.target.value) }))}
+                          >
+                            <option value={30}>30 min</option>
+                            <option value={60}>60 min</option>
+                            <option value={90}>90 min</option>
+                            <option value={120}>120 min</option>
                           </select>
                         </div>
                         <div className="form-group">
                           <label className="staff-label-text">Coach (optional)</label>
-                          <select className="staff-input" value={mBookForm.coach_id} onChange={e => setMBookForm(p => ({ ...p, coach_id: e.target.value }))}>
+                          <select
+                            className="staff-input"
+                            value={mBookForm.coach_id}
+                            onChange={e => setMBookForm(p => ({ ...p, coach_id: e.target.value }))}
+                          >
                             <option value="">Any / Pickup</option>
-                            {coaches.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
+                            {coaches.map(c => (
+                              <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>
+                            ))}
                           </select>
                         </div>
                       </div>
                       <div className="form-group">
                         <label className="staff-label-text">Court (optional)</label>
-                        <select className="staff-input" value={mBookForm.court_id} onChange={e => setMBookForm(p => ({ ...p, court_id: e.target.value }))}>
+                        <select
+                          className="staff-input"
+                          value={mBookForm.court_id}
+                          onChange={e => setMBookForm(p => ({ ...p, court_id: e.target.value }))}
+                        >
                           <option value="">Unassigned</option>
-                          {allCourts.filter(c => c.status === 'available').map(c => <option key={c.id} value={c.id}>{c.name}{c.is_pro_court ? ' (Pro)' : ''}</option>)}
+                          {allCourts.filter(c => c.status === 'available').map(c => (
+                            <option key={c.id} value={c.id}>{c.name}{c.is_pro_court ? ' (Pro)' : ''}</option>
+                          ))}
                         </select>
                       </div>
-                      <button className="btn-staff-primary" disabled={mLoading || !mBookForm.start_time} onClick={bookForMember}>
+                      <button
+                        className="btn-staff-primary"
+                        disabled={mLoading || !mBookForm.start_time}
+                        onClick={bookForMember}
+                      >
                         {mLoading ? 'Booking…' : 'Book Court'}
                       </button>
                     </>
@@ -653,36 +1158,64 @@ export default function DirectorSchedule({ coaches }: Props) {
               {/* ── PRIVATE FLOW ────────────────────────────── */}
               {bookingType === 'private' && (
                 <>
-                  {pMsg && <div className={pMsg.type === 'success' ? 'staff-success' : 'staff-error'}>{pMsg.text}</div>}
+                  <button className="booking-back" onClick={() => setBookingType('pick')}>← Back</button>
+                  {pMsg && (
+                    <div className={pMsg.type === 'success' ? 'staff-success' : 'staff-error'} style={{ marginBottom: 16 }}>
+                      {pMsg.text}
+                    </div>
+                  )}
                   <div className="form-group">
                     <label className="staff-label-text">Date</label>
-                    <input type="date" className="staff-input" value={pDate} onChange={e => { setPDate(e.target.value); setPSelected(null); }} />
+                    <input
+                      type="date"
+                      className="staff-input"
+                      value={pDate}
+                      onChange={e => { setPDate(e.target.value); setPSelected(null); }}
+                    />
                   </div>
                   {pLoading ? (
-                    <div style={{ color: 'var(--staff-dim)', fontSize: 12, padding: '12px 0' }}>Loading lessons…</div>
+                    <div style={{ color: 'var(--staff-dim)', fontFamily: 'var(--font-ui)', fontSize: 11, padding: '10px 0' }}>
+                      Loading lessons…
+                    </div>
                   ) : pLessons.length === 0 ? (
-                    <div style={{ color: 'var(--staff-dim)', fontSize: 12, padding: '12px 0' }}>No unassigned lessons for this date.</div>
+                    <div style={{ color: 'var(--staff-dim)', fontFamily: 'var(--font-ui)', fontSize: 11, padding: '10px 0' }}>
+                      No unassigned lessons for this date.
+                    </div>
                   ) : (
                     <>
                       <div className="staff-label-text" style={{ marginBottom: 8 }}>Select lesson</div>
                       {pLessons.map(l => (
-                        <button key={l.id} className={`btn-staff-ghost`} style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 8, padding: '10px 16px', borderColor: pSelected?.id === l.id ? 'var(--crimson)' : undefined }}
-                          onClick={() => setPSelected(pSelected?.id === l.id ? null : l)}>
-                          {fmtTimeFull(l.start_time)} · {l.duration_minutes}min
+                        <button
+                          key={l.id}
+                          className={`lesson-pick-btn${pSelected?.id === l.id ? ' selected' : ''}`}
+                          onClick={() => setPSelected(pSelected?.id === l.id ? null : l)}
+                        >
+                          <span className="lesson-pick-name">{fmtTimeFull(l.start_time)}</span>
+                          {l.duration_minutes}min
                           {l.member ? ` · ${l.member.first_name} ${l.member.last_name}` : ''}
                           {l.coach ? ` / ${l.coach.first_name} ${l.coach.last_name}` : ''}
                         </button>
                       ))}
                       {pSelected && (
                         <>
-                          <div className="form-group" style={{ marginTop: 16 }}>
+                          <div className="form-group" style={{ marginTop: 14 }}>
                             <label className="staff-label-text">Assign to Court</label>
-                            <select className="staff-input" value={pCourtId} onChange={e => setPCourtId(e.target.value)}>
+                            <select
+                              className="staff-input"
+                              value={pCourtId}
+                              onChange={e => setPCourtId(e.target.value)}
+                            >
                               <option value="">Select court</option>
-                              {allCourts.filter(c => c.status === 'available').map(c => <option key={c.id} value={c.id}>{c.name}{c.is_pro_court ? ' (Pro)' : ''}</option>)}
+                              {allCourts.filter(c => c.status === 'available').map(c => (
+                                <option key={c.id} value={c.id}>{c.name}{c.is_pro_court ? ' (Pro)' : ''}</option>
+                              ))}
                             </select>
                           </div>
-                          <button className="btn-staff-primary" disabled={pLoading || !pCourtId} onClick={assignCourt}>
+                          <button
+                            className="btn-staff-primary"
+                            disabled={pLoading || !pCourtId}
+                            onClick={assignCourt}
+                          >
                             {pLoading ? 'Assigning…' : 'Assign Court'}
                           </button>
                         </>
@@ -695,36 +1228,64 @@ export default function DirectorSchedule({ coaches }: Props) {
               {/* ── EVENT FLOW ──────────────────────────────── */}
               {bookingType === 'event' && (
                 <>
-                  {eMsg && <div className={eMsg.type === 'success' ? 'staff-success' : 'staff-error'}>{eMsg.text}</div>}
+                  <button className="booking-back" onClick={() => setBookingType('pick')}>← Back</button>
+                  {eMsg && (
+                    <div className={eMsg.type === 'success' ? 'staff-success' : 'staff-error'} style={{ marginBottom: 16 }}>
+                      {eMsg.text}
+                    </div>
+                  )}
                   <div className="form-group">
                     <label className="staff-label-text">Event Name</label>
-                    <input className="staff-input" placeholder="Member Tournament, Club Day…" value={eName} onChange={e => setEName(e.target.value)} />
+                    <input
+                      className="staff-input"
+                      placeholder="Member Tournament, Club Day…"
+                      value={eName}
+                      onChange={e => setEName(e.target.value)}
+                    />
                   </div>
                   <div className="form-group">
                     <label className="staff-label-text">Date</label>
-                    <input type="date" className="staff-input" value={eDate} onChange={e => setEDate(e.target.value)} />
+                    <input
+                      type="date"
+                      className="staff-input"
+                      value={eDate}
+                      onChange={e => setEDate(e.target.value)}
+                    />
                   </div>
                   <div className="form-group">
                     <label className="staff-label-text">Courts to Block</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 8 }}>
+                    <div className="court-check-grid">
                       {allCourts.map(c => (
-                        <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--staff-muted)' }}>
-                          <input type="checkbox" checked={eCourts.includes(c.id)} onChange={e => setECourts(prev => e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id))} style={{ accentColor: 'var(--crimson)' }} />
+                        <label key={c.id} className="court-check-label">
+                          <input
+                            type="checkbox"
+                            checked={eCourts.includes(c.id)}
+                            onChange={e => setECourts(prev =>
+                              e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                            )}
+                          />
                           {c.name}
                         </label>
                       ))}
                     </div>
                     {allCourts.length > 0 && (
-                      <button className="btn-staff-ghost" style={{ marginTop: 10, padding: '6px 14px', fontSize: 10 }}
-                        onClick={() => setECourts(eCourts.length === allCourts.length ? [] : allCourts.map(c => c.id))}>
+                      <button
+                        className="btn-staff-ghost"
+                        style={{ marginTop: 10, padding: '5px 12px', fontSize: 10 }}
+                        onClick={() => setECourts(eCourts.length === allCourts.length ? [] : allCourts.map(c => c.id))}
+                      >
                         {eCourts.length === allCourts.length ? 'Deselect All' : 'Select All'}
                       </button>
                     )}
                   </div>
-                  <p style={{ fontFamily: 'var(--font-ui)', fontSize: 11, color: 'var(--staff-dim)', marginBottom: 16, lineHeight: 1.6 }}>
-                    Selected courts will be blocked with the event name. Unblock them manually via Court Status after the event.
+                  <p className="modal-hint">
+                    Selected courts will be blocked with the event name. Unblock them via Court Status after the event.
                   </p>
-                  <button className="btn-staff-primary" disabled={eLoading || !eName || !eCourts.length} onClick={blockEvent}>
+                  <button
+                    className="btn-staff-primary"
+                    disabled={eLoading || !eName || !eCourts.length}
+                    onClick={blockEvent}
+                  >
                     {eLoading ? 'Blocking…' : `Block ${eCourts.length} Court${eCourts.length !== 1 ? 's' : ''}`}
                   </button>
                 </>
@@ -734,10 +1295,6 @@ export default function DirectorSchedule({ coaches }: Props) {
           </div>
         </div>
       )}
-
-      {/* ── Booking type selector (rendered as an additional overlay) ── */}
-      {/* Actually surfaced via a choice modal when we first click "+ Book Court" */}
-      {/* Handled below by rendering a choice picker first */}
     </>
   );
 }
