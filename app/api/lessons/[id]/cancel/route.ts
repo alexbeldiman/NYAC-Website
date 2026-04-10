@@ -71,7 +71,6 @@ export async function POST(
 
   // Create cancellation review row
   const now = new Date();
-  const autoResolveAt = new Date(now.getTime() + 24 * 3_600_000);
 
   const { data: review, error: reviewError } = await serviceClient
     .from("lesson_cancellation_reviews")
@@ -80,7 +79,6 @@ export async function POST(
       cancelled_by_last_name: last_name,
       cancelled_by_audit_number: audit_number,
       cancelled_at: now.toISOString(),
-      auto_resolve_at: autoResolveAt.toISOString(),
     })
     .select()
     .single();
