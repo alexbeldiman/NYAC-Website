@@ -565,9 +565,7 @@ export default function DirectorPage() {
                         {Array.from({ length: 14 }, (_, i) => i + 7).map(h => {
                           const hourLessons = lessons.filter(l => {
                             if (!l.start_time.startsWith(selectedDayDate)) return false;
-                            const startH = new Date(l.start_time).getHours();
-                            const endH = Math.floor((new Date(l.start_time).getTime() + l.duration_minutes * 60000 - 1) / 3600000);
-                            return startH <= h && endH >= h;
+                            return new Date(l.start_time).getHours() === h;
                           });
                           
                           return (
