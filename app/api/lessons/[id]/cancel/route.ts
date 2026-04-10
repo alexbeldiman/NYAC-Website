@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { withApiErrorHandling } from "@/lib/api";
 import {
   notifyCoachLessonCancelled,
@@ -11,7 +11,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   return withApiErrorHandling(async () => {
-    const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
   const body = await request.json();
   const { last_name, audit_number } = body;
@@ -24,7 +24,8 @@ export async function POST(
   }
 
   // Fetch the lesson with member and coach info
-  const { data: lesson, error: lessonError } = await supabase
+  // Must use serviceClient — RLS on private_lessons only allows staff reads
+  const { data: lesson, error: lessonError } = await serviceClient
     .from("private_lessons")
     .select(
       `
@@ -55,8 +56,6 @@ export async function POST(
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const serviceClient = createServiceClient();
 
   // Set lesson status to cancelled
   const { data: updatedLesson, error: updateError } = await serviceClient

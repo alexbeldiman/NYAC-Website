@@ -31,6 +31,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: coachError.message }, { status: 500 });
   }
 
+  // Compute ET-midnight UTC boundaries so the query window aligns with Eastern days
+  function etMidnightISO(dateStr: string): string {
+    const probe = new Date(`${dateStr}T12:00:00Z`);
+    const etHour = parseInt(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false }).format(probe));
+    const offset = 12 - etHour; // 4 for EDT, 5 for EST
+    return new Date(`${dateStr}T${String(offset).padStart(2, "0")}:00:00Z`).toISOString();
+  }
+
   // All non-cancelled lessons in range for these coaches
   const coachIds = (coaches ?? []).map((c) => c.id);
 
@@ -39,8 +47,8 @@ export async function GET(request: NextRequest) {
     .select("id, coach_id, start_time, duration_minutes, status")
     .in("coach_id", coachIds)
     .neq("status", "cancelled")
-    .gte("start_time", `${start_date}T00:00:00Z`)
-    .lt("start_time", `${end_date}T24:00:00Z`);
+    .gte("start_time", etMidnightISO(start_date))
+    .lt("start_time", etMidnightISO(end_date));
 
   if (lessonError) {
     return NextResponse.json({ error: lessonError.message }, { status: 500 });
@@ -52,8 +60,8 @@ export async function GET(request: NextRequest) {
     .select("id, coach_id, unavailable_from, unavailable_to, reason")
     .in("coach_id", coachIds)
     .eq("status", "approved")
-    .lt("unavailable_from", `${end_date}T24:00:00Z`)
-    .gte("unavailable_to", `${start_date}T00:00:00Z`);
+    .lt("unavailable_from", etMidnightISO(end_date))
+    .gte("unavailable_to", etMidnightISO(start_date));
 
   if (unavailError) {
     return NextResponse.json({ error: unavailError.message }, { status: 500 });

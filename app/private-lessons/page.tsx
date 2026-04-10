@@ -44,8 +44,29 @@ function slotTo12(s: string): string {
   return `${h12}:${String(m).padStart(2, '0')} ${suffix}`;
 }
 
+const ET_TZ = 'America/New_York';
+
 function dateISO(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return d.toLocaleDateString('en-CA', { timeZone: ET_TZ });
+}
+
+/** Returns the UTC offset in hours for a given calendar date in ET (4 for EDT, 5 for EST). */
+function etOffset(dateStr: string): number {
+  const probe = new Date(`${dateStr}T12:00:00Z`);
+  const etHour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: ET_TZ, hour: 'numeric', hour12: false }).format(probe));
+  return 12 - etHour;
+}
+
+/** Converts a YYYY-MM-DD date + HH:MM slot (ET) into a UTC ISO string for storage. */
+function slotToISO(dateStr: string, slot: string): string {
+  const off = etOffset(dateStr);
+  const offsetStr = off === 4 ? '-04:00' : '-05:00';
+  return new Date(`${dateStr}T${slot}:00${offsetStr}`).toISOString();
+}
+
+/** Returns the YYYY-MM-DD in ET for any UTC ISO timestamp. */
+function etDateOf(isoStr: string): string {
+  return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: ET_TZ });
 }
 
 function addDays(d: Date, n: number): Date {
@@ -73,12 +94,11 @@ function isSlotTaken(
   dateStr: string,      // YYYY-MM-DD
   slotTime: string      // HH:MM
 ): boolean {
-  const [sh, sm] = slotTime.split(':').map(Number);
-  const slotStart = new Date(`${dateStr}T${slotTime}:00Z`).getTime();
+  const slotStart = new Date(slotToISO(dateStr, slotTime)).getTime();
   const slotEnd = slotStart + 60 * 60_000;
 
   for (const lesson of coach.lessons) {
-    if (!lesson.start_time.startsWith(dateStr)) continue;
+    if (etDateOf(lesson.start_time) !== dateStr) continue;
     const ls = new Date(lesson.start_time).getTime();
     const le = ls + lesson.duration_minutes * 60_000;
     if (slotStart < le && slotEnd > ls) return true;
@@ -268,8 +288,8 @@ export default function PrivateLessonsPage() {
     setPopupCell({ coachId, dateISO: dateStr, slot });
     const coach = coaches.find(c => c.id === coachId);
     const coachName = coach ? `${coach.first_name} ${coach.last_name}` : '—';
-    const d = new Date(`${dateStr}T00:00:00`);
-    const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const d = new Date(`${dateStr}T12:00:00Z`);
+    const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: ET_TZ });
     const timeFmt = slotTo12(slot);
 
     if (currentFlow === 'date') {
@@ -289,10 +309,10 @@ export default function PrivateLessonsPage() {
     const { coachId, dateISO: dISO, slot } = popupCell;
     const coach = coaches.find(c => c.id === coachId);
     const coachName = coach ? `${coach.first_name} ${coach.last_name}` : '—';
-    const d = new Date(`${dISO}T00:00:00`);
-    const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const d = new Date(`${dISO}T12:00:00Z`);
+    const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: ET_TZ });
     const timeFmt = slotTo12(slot);
-    const startTime = `${dISO}T${slot}:00Z`;
+    const startTime = slotToISO(dISO, slot);
 
     setPendingBooking({ coachName, dateLong, timeFmt, startTime, coachId });
     setBookingStep(1);
@@ -367,7 +387,8 @@ export default function PrivateLessonsPage() {
       <div className="date-slot-list">
         {TIME_SLOTS.map(slot => {
           const [sh] = slot.split(':').map(Number);
-          const isPast = selectedDateISO === todayISO && sh <= now.getHours();
+          const nowET = new Date(now.toLocaleString('en-US', { timeZone: ET_TZ }));
+          const isPast = selectedDateISO === todayISO && sh <= nowET.getHours();
           const availableCount = coaches.filter(c => !isSlotTaken(c, selectedDateISO!, slot) && !isCoachFullyUnavailable(c, selectedDateISO!)).length;
           const isAvail = !isPast && availableCount > 0;
           const isSelected = dateSelectedSlot === slot;
@@ -399,10 +420,10 @@ export default function PrivateLessonsPage() {
     function selectCoach(coachId: string | null) {
       const coach = coaches.find(c => c.id === coachId);
       const coachName = coachId ? (coach ? `${coach.first_name} ${coach.last_name}` : '—') : 'Any Available Coach';
-      const d = new Date(`${selectedDateISO}T00:00:00`);
-      const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      const d = new Date(`${selectedDateISO}T12:00:00Z`);
+      const dateLong = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: ET_TZ });
       const timeFmt = slotTo12(dateSelectedSlot!);
-      const startTime = `${selectedDateISO}T${dateSelectedSlot}:00`;
+      const startTime = slotToISO(selectedDateISO!, dateSelectedSlot!);
       setPendingBooking({ coachName, dateLong, timeFmt, startTime, coachId });
       setBookingStep(1);
       setTimeout(() => document.getElementById('pl-confirmation-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
@@ -426,7 +447,7 @@ export default function PrivateLessonsPage() {
   }
 
   function isCoachFullyUnavailable(coach: CoachProfile, dateStr: string): boolean {
-    const dayStart = new Date(`${dateStr}T00:00:00Z`).getTime();
+    const dayStart = new Date(slotToISO(dateStr, '00:00')).getTime();
     const dayEnd = dayStart + 24 * 60 * 60_000;
     for (const w of coach.unavailability) {
       const ws = new Date(w.unavailable_from).getTime();
@@ -451,8 +472,8 @@ export default function PrivateLessonsPage() {
               <th className="pl-time-col-header"></th>
               {days.map(day => {
                 const isPast = day < today;
-                const dayAbbr = day.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                const dateStr = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const dayAbbr = day.toLocaleDateString('en-US', { weekday: 'short', timeZone: ET_TZ }).toUpperCase();
+                const dateStr = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: ET_TZ });
                 return (
                   <th key={dateISO(day)} style={{ opacity: isPast ? 0.4 : 1 }}>
                     <span style={{ display: 'block' }}>{dayAbbr}</span>
@@ -485,7 +506,7 @@ export default function PrivateLessonsPage() {
                     >
                       {isPopup && !taken && (
                         <div className="pl-cell-popup" onClick={e => e.stopPropagation()}>
-                          <span className="pl-cell-popup-label">{slotTo12(slot)} · {new Date(`${dISO}T00:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                          <span className="pl-cell-popup-label">{slotTo12(slot)} · {new Date(`${dISO}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: ET_TZ })}</span>
                           <div className="pl-cell-popup-actions">
                             <button className="btn-crimson pl-inline-confirm-btn" style={{ padding: '6px 14px', fontSize: 10 }} onClick={handleInlineConfirm}>Confirm</button>
                             <button className="pl-inline-cancel-btn" onClick={() => { setPopupCell(null); setCoachSelectedDateISO(null); setCoachSelectedSlot(null); setCoachSummary({ coach: coachSummary.coach, date: '—', time: '—' }); }}>Cancel</button>
@@ -511,10 +532,10 @@ export default function PrivateLessonsPage() {
       const d = addDays(today, i);
       return {
         iso: dateISO(d),
-        dayLabel: i === 0 ? 'TODAY' : d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
-        num: d.getDate(),
-        monthStr: d.toLocaleDateString('en-US', { month: 'short' }),
-        weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayLabel: i === 0 ? 'TODAY' : d.toLocaleDateString('en-US', { weekday: 'short', timeZone: ET_TZ }).toUpperCase(),
+        num: parseInt(d.toLocaleDateString('en-US', { day: 'numeric', timeZone: ET_TZ })),
+        monthStr: d.toLocaleDateString('en-US', { month: 'short', timeZone: ET_TZ }),
+        weekday: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: ET_TZ }),
       };
     });
 
@@ -547,7 +568,7 @@ export default function PrivateLessonsPage() {
                         setPopupCell(null);
                         setDateSelectedCoachId(null);
                         setDateSelectedSlot(null);
-                        setDateSummary({ coach: '—', date: new Date(`${p.iso}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }), time: '—' });
+                        setDateSummary({ coach: '—', date: new Date(`${p.iso}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: ET_TZ }), time: '—' });
                       }}
                     >
                       <span className="date-tray-pill-day">{p.dayLabel}</span>
@@ -575,7 +596,7 @@ export default function PrivateLessonsPage() {
   /* ─── Week Nav label ─────────────────────────────────────────── */
   function weekLabel(offset: number): string {
     const days = getWeekDays(offset);
-    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: ET_TZ });
     const prefix = offset === 0 ? 'This Week' : 'Next Week';
     return `${prefix} · ${fmt(days[0])} – ${fmt(days[6])}`;
   }
@@ -905,9 +926,9 @@ export default function PrivateLessonsPage() {
                 : upcomingLessons.map(l => (
                   <div key={l.id} className="pl-lesson-row">
                     <div className="pl-lesson-info">
-                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: ET_TZ })}</span>
                       <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
-                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
+                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: ET_TZ })} · {l.duration_minutes} min</span>
                       <span className={`pl-lesson-row-status pl-lesson-status-upcoming`}>{l.status === 'pending_pickup' ? 'Pending' : 'Confirmed'}</span>
                     </div>
                     {cancellingId === l.id ? (
@@ -930,9 +951,9 @@ export default function PrivateLessonsPage() {
                 : pastLessons.map(l => (
                   <div key={l.id} className="pl-lesson-row">
                     <div className="pl-lesson-info">
-                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: ET_TZ })}</span>
                       <span className="pl-lesson-row-coach">{l.coach ? `${l.coach.first_name} ${l.coach.last_name}` : 'Any Coach'}</span>
-                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
+                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: ET_TZ })} · {l.duration_minutes} min</span>
                       <span className="pl-lesson-row-status pl-lesson-status-past">{l.status === 'completed' ? 'Completed' : l.status}</span>
                     </div>
                   </div>
