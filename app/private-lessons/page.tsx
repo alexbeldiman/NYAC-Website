@@ -175,14 +175,11 @@ export default function PrivateLessonsPage() {
         setVerifyError('Audit number or last name not recognised. Please try again.');
         return;
       }
-      const allLessons: MemberLesson[] = [...(data.upcoming ?? []), ...(data.past ?? [])];
-      const memberMap = new Map<string, FamilyMember>();
-      for (const l of allLessons) {
-        if (l.member_id && l.member && !memberMap.has(l.member_id)) {
-          memberMap.set(l.member_id, { id: l.member_id, first_name: l.member.first_name, last_name: l.member.last_name });
-        }
-      }
-      const members = Array.from(memberMap.values());
+      const members: FamilyMember[] = (data.family ?? []).map((f: { id: string; first_name: string; last_name: string }) => ({
+        id: f.id,
+        first_name: f.first_name,
+        last_name: f.last_name,
+      }));
 
       credsRef.current = { auditNumber: audit, lastName: last };
       setFamilyMembers(members);

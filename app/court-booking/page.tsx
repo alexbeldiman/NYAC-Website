@@ -103,6 +103,18 @@ function formatDateShort(dateStr: string, index: number): { day: string; num: st
   };
 }
 
+function toEasternISO(dateStr: string, timeStr: string): string {
+  const probe = new Date(`${dateStr}T12:00:00`);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    timeZoneName: 'shortOffset',
+  }).formatToParts(probe);
+  const tzName = parts.find(p => p.type === 'timeZoneName')?.value ?? 'GMT-5';
+  const raw = tzName.replace('GMT', '') + ':00'; // e.g. "-4:00"
+  const paddedOffset = raw.replace(/^(-?)(\d):/, '$10$2:'); // "-04:00"
+  return `${dateStr}T${timeStr}:00${paddedOffset}`;
+}
+
 function getAllTimeSlots(): string[] {
   const slots: string[] = [];
   for (let h = 7; h <= 20; h++) {
@@ -314,9 +326,9 @@ export default function CourtBookingPage() {
     if (!court) { setBookingError('Court not found. Please reselect.'); return; }
     setBookingLoading(true);
     try {
-      const start_time = `${selectedDate}T${selectedTime}:00`;
+      const start_time = toEasternISO(selectedDate!, selectedTime!);
       const duration_minutes = selectedDuration! * 60;
-      const res = await fetch('/api/lessons', {
+      const res = await fetch('/api/court-bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -326,7 +338,6 @@ export default function CourtBookingPage() {
           start_time,
           duration_minutes,
           court_id: court.id,
-          booked_via: 'court_booking',
         }),
       });
       const data = await res.json();
@@ -431,7 +442,8 @@ export default function CourtBookingPage() {
         .pl-lesson-row { display: grid; grid-template-columns: 140px 1fr 130px 100px; align-items: center; gap: 12px 24px; padding: 16px 0; border-bottom: 1px solid var(--light-gray); }
         .pl-lesson-row:first-child { border-top: 1px solid var(--light-gray); }
         .pl-lesson-row-date { font-family: var(--font-body); font-size: 14px; color: var(--dark); }
-        .pl-lesson-row-coach { font-family: var(--font-body); font-size: 14px; color: var(--dark); }
+        .pl-lesson-row-coach { font-family: var(--font-body); font-size: 14px; color: var(--dark); display: flex; flex-direction: column; gap: 2px; }
+        .pl-lesson-row-member { font-family: var(--font-body); font-size: 12px; color: var(--mid-gray); }
         .pl-lesson-row-time { font-family: var(--font-ui); font-size: 12px; color: var(--mid-gray); text-transform: uppercase; letter-spacing: 0.08em; }
         .pl-lesson-row-status { font-family: var(--font-ui); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
         .pl-lesson-status-upcoming { color: #228B22; }
@@ -620,9 +632,12 @@ export default function CourtBookingPage() {
                   ? <p className="pl-lessons-empty">No upcoming bookings.</p>
                   : upcomingLessons.map(l => (
                     <div key={l.id} className="pl-lesson-row">
-                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                      <span className="pl-lesson-row-coach">{l.court?.name ?? '—'}</span>
-                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
+                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="pl-lesson-row-coach">
+                        {l.court?.name ?? '—'}
+                        {l.member && <span className="pl-lesson-row-member">{l.member.first_name} {l.member.last_name}</span>}
+                      </span>
+                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
                       <span className="pl-lesson-row-status pl-lesson-status-upcoming">Confirmed</span>
                       <button
                         className="pl-cancel-btn"
@@ -640,9 +655,12 @@ export default function CourtBookingPage() {
                   ? <p className="pl-lessons-empty">No past bookings found.</p>
                   : pastLessons.map(l => (
                     <div key={l.id} className="pl-lesson-row">
-                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                      <span className="pl-lesson-row-coach">{l.court?.name ?? '—'}</span>
-                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
+                      <span className="pl-lesson-row-date">{new Date(l.start_time).toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="pl-lesson-row-coach">
+                        {l.court?.name ?? '—'}
+                        {l.member && <span className="pl-lesson-row-member">{l.member.first_name} {l.member.last_name}</span>}
+                      </span>
+                      <span className="pl-lesson-row-time">{new Date(l.start_time).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' })} · {l.duration_minutes} min</span>
                       <span className="pl-lesson-row-status pl-lesson-status-past">{l.status === 'cancelled' ? 'Cancelled' : 'Completed'}</span>
                     </div>
                   ))

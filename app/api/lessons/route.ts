@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
         coach:profiles!private_lessons_coach_id_fkey(first_name, last_name)
         `
       )
-      .neq("booked_via", "court_booking")
       .order("start_time");
 
     if (coach_id) query = query.eq("coach_id", coach_id);
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
     booked_via: bookedViaInput,
   } = body;
 
-  const VALID_BOOKED_VIA = ['member_app', 'tennis_house', 'coach', 'court_booking'] as const;
+  const VALID_BOOKED_VIA = ['member_app', 'tennis_house', 'coach'] as const;
   type BookedVia = typeof VALID_BOOKED_VIA[number];
   const booked_via: BookedVia = VALID_BOOKED_VIA.includes(bookedViaInput) ? bookedViaInput : 'member_app';
 
@@ -173,8 +172,7 @@ export async function POST(request: NextRequest) {
       ? new Date(start.getTime() - 24 * 3_600_000).toISOString()
       : new Date(now.getTime() + 6 * 3_600_000).toISOString();
 
-  // Court bookings are always confirmed (no coach to pick up)
-  const status = (coach_id || booked_via === 'court_booking') ? "confirmed" : "pending_pickup";
+  const status = coach_id ? "confirmed" : "pending_pickup";
 
   // 6. Insert lesson
   const serviceClient = createServiceClient();
