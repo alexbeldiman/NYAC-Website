@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const { data: family, error: familyError } = await supabase
       .from("profiles")
-      .select("id")
+      .select("id, first_name, last_name")
       .ilike("last_name", last_name)
       .eq("audit_number", audit_number);
 
@@ -78,6 +78,6 @@ export async function GET(request: NextRequest) {
     }
     past.reverse();
 
-    return NextResponse.json({ upcoming, past });
+    return NextResponse.json({ upcoming, past, family });
   });
 }

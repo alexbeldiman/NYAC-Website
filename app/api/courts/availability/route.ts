@@ -8,8 +8,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * booked time windows for the given date, so the public booking UI can
  * show which courts are available at which times.
  *
- * Booked windows come from private_lessons that are not cancelled and
- * have a court_id assigned.
+ * Booked windows come from court_bookings that are not cancelled.
  */
 export async function GET(request: NextRequest) {
   const date = request.nextUrl.searchParams.get("date");
@@ -24,18 +23,17 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const serviceClient = createServiceClient();
 
-  const [courtsResult, lessonsResult] = await Promise.all([
+  const [courtsResult, bookingsResult] = await Promise.all([
     supabase
       .from("courts")
       .select("id, name, is_pro_court, status, blocked_reason")
       .order("name"),
     serviceClient
-      .from("private_lessons")
-      .select("court_id, start_time, duration_minutes, status")
+      .from("court_bookings")
+      .select("court_id, start_time, duration_minutes")
       .gte("start_time", `${date}T00:00:00Z`)
       .lt("start_time", `${date}T24:00:00Z`)
-      .neq("status", "cancelled")
-      .not("court_id", "is", null),
+      .eq("status", "confirmed"),
   ]);
 
   if (courtsResult.error) {
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const lessons = lessonsResult.data ?? [];
+  const bookings = bookingsResult.data ?? [];
 
   // Group booked windows by court_id
   const bookedByCourt: Record<
@@ -53,12 +51,11 @@ export async function GET(request: NextRequest) {
     { start_time: string; duration_minutes: number }[]
   > = {};
 
-  for (const lesson of lessons) {
-    if (!lesson.court_id) continue;
-    if (!bookedByCourt[lesson.court_id]) bookedByCourt[lesson.court_id] = [];
-    bookedByCourt[lesson.court_id]!.push({
-      start_time: lesson.start_time,
-      duration_minutes: lesson.duration_minutes ?? 60,
+  for (const booking of bookings) {
+    if (!bookedByCourt[booking.court_id]) bookedByCourt[booking.court_id] = [];
+    bookedByCourt[booking.court_id]!.push({
+      start_time: booking.start_time,
+      duration_minutes: booking.duration_minutes ?? 60,
     });
   }
 

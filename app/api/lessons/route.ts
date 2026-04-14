@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const coach_id = searchParams.get("coach_id");
     const date = searchParams.get("date");
+    const start_date = searchParams.get("start_date");
+    const end_date = searchParams.get("end_date");
     const status = searchParams.get("status");
 
     let query = supabase
@@ -40,6 +42,10 @@ export async function GET(request: NextRequest) {
       query = query
         .gte("start_time", `${date}T00:00:00Z`)
         .lt("start_time", `${date}T24:00:00Z`);
+    } else if (start_date && end_date) {
+      query = query
+        .gte("start_time", `${start_date}T00:00:00Z`)
+        .lt("start_time", `${end_date}T24:00:00Z`);
     }
 
     const { data, error } = await query;
@@ -68,7 +74,7 @@ export async function POST(request: NextRequest) {
     booked_via: bookedViaInput,
   } = body;
 
-  const VALID_BOOKED_VIA = ['member_app', 'tennis_house', 'coach', 'court_booking'] as const;
+  const VALID_BOOKED_VIA = ['member_app', 'tennis_house', 'coach'] as const;
   type BookedVia = typeof VALID_BOOKED_VIA[number];
   const booked_via: BookedVia = VALID_BOOKED_VIA.includes(bookedViaInput) ? bookedViaInput : 'member_app';
 
@@ -166,8 +172,7 @@ export async function POST(request: NextRequest) {
       ? new Date(start.getTime() - 24 * 3_600_000).toISOString()
       : new Date(now.getTime() + 6 * 3_600_000).toISOString();
 
-  // Court bookings are always confirmed (no coach to pick up)
-  const status = (coach_id || booked_via === 'court_booking') ? "confirmed" : "pending_pickup";
+  const status = coach_id ? "confirmed" : "pending_pickup";
 
   // 6. Insert lesson
   const serviceClient = createServiceClient();

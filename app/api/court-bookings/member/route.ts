@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     const serviceClient = createServiceClient();
 
     const { data: bookings, error: bookingsError } = await serviceClient
-      .from("private_lessons")
+      .from("court_bookings")
       .select(
         `
         id,
@@ -43,12 +43,11 @@ export async function GET(request: NextRequest) {
         start_time,
         duration_minutes,
         status,
-        court:courts!private_lessons_court_id_fkey(id, name),
-        member:profiles!private_lessons_member_id_fkey(first_name, last_name)
+        court:courts!court_bookings_court_id_fkey(id, name),
+        member:profiles!court_bookings_member_id_fkey(first_name, last_name)
         `
       )
       .in("member_id", memberIds)
-      .eq("booked_via", "court_booking")
       .order("start_time");
 
     if (bookingsError) {

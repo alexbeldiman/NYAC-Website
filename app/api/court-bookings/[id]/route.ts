@@ -44,8 +44,8 @@ export async function PATCH(
 
     // Fetch the booking and verify it belongs to this family
     const { data: booking, error: fetchError } = await serviceClient
-      .from("private_lessons")
-      .select("id, member_id, status, booked_via, start_time")
+      .from("court_bookings")
+      .select("id, member_id, status, start_time")
       .eq("id", id)
       .single();
 
@@ -57,15 +57,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (booking.booked_via !== "court_booking") {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-    }
-
     if (booking.status === "cancelled") {
       return NextResponse.json({ error: "Booking is already cancelled" }, { status: 409 });
     }
 
-    // Cannot cancel past bookings
     if (new Date(booking.start_time) < new Date()) {
       return NextResponse.json(
         { error: "Cannot cancel a booking that has already started" },
@@ -74,7 +69,7 @@ export async function PATCH(
     }
 
     const { data: updated, error: updateError } = await serviceClient
-      .from("private_lessons")
+      .from("court_bookings")
       .update({ status: "cancelled" })
       .eq("id", id)
       .select()
