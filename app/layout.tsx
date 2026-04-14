@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import TimezoneNotice from "@/components/TimezoneNotice";
 
 export const metadata: Metadata = {
   title: "NYAC Travers Island Tennis",
@@ -20,10 +19,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>
-        <TimezoneNotice />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

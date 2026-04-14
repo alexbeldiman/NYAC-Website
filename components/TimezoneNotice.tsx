@@ -15,6 +15,11 @@ export default function TimezoneNotice() {
     if (tz !== ET_TZ) {
       setLocalTz(tz);
       setShow(true);
+      const timer = setTimeout(() => {
+        sessionStorage.setItem(DISMISSED_KEY, '1');
+        setShow(false);
+      }, 10000);
+      return () => clearTimeout(timer);
     }
   }, []);
 

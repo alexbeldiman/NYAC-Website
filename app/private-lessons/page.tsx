@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TimezoneNotice from '@/components/TimezoneNotice';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface CoachProfile {
@@ -604,6 +605,7 @@ export default function PrivateLessonsPage() {
   /* ─── Render ─────────────────────────────────────────────────── */
   return (
     <>
+      <TimezoneNotice />
       <Navbar />
       <style suppressHydrationWarning>{`
         :root {
