@@ -40,14 +40,14 @@ function todayStr() {
   return new Date().toISOString().split('T')[0];
 }
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
 }
 function addDays(date: string, n: number) {
   const d = new Date(date); d.setDate(d.getDate() + n);
   return d.toISOString().split('T')[0];
 }
 function fmtDate(date: string) {
-  return new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' });
 }
 
 // ─── Main Component ───────────────────────────────────────────

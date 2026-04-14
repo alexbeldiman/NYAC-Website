@@ -36,8 +36,8 @@ const TABS = [
 ];
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); }
-function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' }); }
+function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' }); }
 function addDays(date: string, n: number) { const d = new Date(date); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; }
 
 const DOW_OPTIONS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
@@ -528,7 +528,7 @@ export default function CoachPage() {
                       <td>{a.unavailable_to.split('T')[0]}</td>
                       <td>{a.reason ?? '—'}</td>
                       <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
-                      <td>{a.approved_at ? new Date(a.approved_at).toLocaleDateString() : '—'}</td>
+                      <td>{a.approved_at ? new Date(a.approved_at).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -24,13 +24,13 @@ const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am–8pm
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); }
+function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' }); }
 function dateStr(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 }
 function fmtHour(h: number) { return h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h-12} PM`; }
 function fmtTimeFull(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
 }
 
 function getCalendarCells(year: number, month: number): (number | null)[] {

@@ -25,6 +25,7 @@ interface ClinicBillingEntry { audit_number: string; member_name: string; total_
 interface LessonBillingEntry { audit_number: string; member_name: string; total_lessons: number; total_minutes: number; }
 interface ProgramBillingEntry { audit_number: string; family_name: string; total_mitl: number; total_academy: number; }
 interface ClinicSlot { id: string; date: string; hour: number; gender_restriction: string | null; capacity: number; signed_up_count: number; is_full: boolean; access_code: string | null; }
+interface SlotAttendee { id: string; member_id: string; display_name: string; audit_number: string | null; guest_count: number; signed_up_at: string; }
 interface AvailabilityEntry {
   id: string; coach_id: string; unavailable_from: string; unavailable_to: string;
   reason: string | null; status: string; approved_by: string | null; approved_at: string | null;
@@ -46,8 +47,22 @@ const TABS = [
 ];
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }); }
-function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function getUpcomingWeekend(today: string): { saturday: string; sunday: string } {
+  const d = new Date(today + 'T12:00:00');
+  const day = d.getDay(); // 0=Sun
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  const base = d.getTime();
+  const satMs = base + (5 - daysSinceMonday) * 86400000;
+  const sunMs = base + (6 - daysSinceMonday) * 86400000;
+  return {
+    saturday: new Date(satMs).toISOString().split('T')[0],
+    sunday: new Date(sunMs).toISOString().split('T')[0],
+  };
+}
+function fmtHour(h: number) { return h <= 11 ? `${h}:00 AM` : `${h === 12 ? 12 : h - 12}:00 PM`; }
+function fmtDateFull(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York' }); }
+function fmtTime(iso: string) { return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' }); }
+function fmtDate(d: string) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' }); }
 function addDays(date: string, n: number) { const d = new Date(date); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; }
 function prevMonday(date: string) { const d = new Date(date + 'T12:00:00'); const day = d.getDay(); const diff = (day === 0 ? -6 : 1 - day); d.setDate(d.getDate() + diff); return d.toISOString().split('T')[0]; }
 
@@ -87,9 +102,18 @@ export default function DirectorPage() {
   const [billingLoading, setBillingLoading] = useState(false);
 
   // Clinics tab
-  const [clinicSlots, setClinicSlots] = useState<ClinicSlot[]>([]);
-  const [clinicsLoading, setClinicsLoading] = useState(false);
-  const [clinicDate, setClinicDate] = useState(todayStr());
+  const [clinicWeekend] = useState(() => getUpcomingWeekend(todayStr()));
+  const [satSlots, setSatSlots] = useState<ClinicSlot[]>([]);
+  const [sunSlots, setSunSlots] = useState<ClinicSlot[]>([]);
+  const [clinicWeekendLoading, setClinicWeekendLoading] = useState(false);
+  const [expandedSlotId, setExpandedSlotId] = useState<string | null>(null);
+  const [slotAttendees, setSlotAttendees] = useState<Record<string, SlotAttendee[]>>({});
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
+  const [slotMemberSearch, setSlotMemberSearch] = useState('');
+  const [slotMemberResults, setSlotMemberResults] = useState<Member[]>([]);
+  const [slotMemberSearching, setSlotMemberSearching] = useState(false);
+  const [removingSignupId, setRemovingSignupId] = useState<string | null>(null);
+  const [addingMemberId, setAddingMemberId] = useState<string | null>(null);
   const [codesGenerating, setCodesGenerating] = useState(false);
   const [clinicMsg, setClinicMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -219,20 +243,34 @@ export default function DirectorPage() {
     if (activeTab === 'billing') fetchBilling(billingSubTab, billingWeek);
   }, [activeTab, billingSubTab, billingWeek, fetchBilling]);
 
-  // ─── Fetch clinic slots ───────────────────────────────────
-  const fetchClinicSlots = useCallback(async (date: string) => {
-    setClinicsLoading(true);
+  // ─── Fetch weekend clinic slots ───────────────────────────
+  const fetchWeekendSlots = useCallback(async (saturday: string, sunday: string) => {
+    setClinicWeekendLoading(true);
     try {
-      const res = await fetch(`/api/clinics/slots?date=${date}`);
+      const [satRes, sunRes] = await Promise.all([
+        fetch(`/api/clinics/slots?date=${saturday}`),
+        fetch(`/api/clinics/slots?date=${sunday}`),
+      ]);
+      const [satData, sunData] = await Promise.all([satRes.json(), sunRes.json()]);
+      setSatSlots(Array.isArray(satData) ? satData : []);
+      setSunSlots(Array.isArray(sunData) ? sunData : []);
+    } catch { setSatSlots([]); setSunSlots([]); }
+    finally { setClinicWeekendLoading(false); }
+  }, []);
+
+  const fetchSlotAttendees = useCallback(async (slotId: string) => {
+    setAttendeesLoading(true);
+    try {
+      const res = await fetch(`/api/clinics/slots/${slotId}/attendees`);
       const data = await res.json();
-      setClinicSlots(Array.isArray(data) ? data : []);
-    } catch { setClinicSlots([]); }
-    finally { setClinicsLoading(false); }
+      setSlotAttendees(prev => ({ ...prev, [slotId]: Array.isArray(data) ? data : [] }));
+    } catch { /* ignore */ }
+    finally { setAttendeesLoading(false); }
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'clinics') fetchClinicSlots(clinicDate);
-  }, [activeTab, clinicDate, fetchClinicSlots]);
+    if (activeTab === 'clinics') fetchWeekendSlots(clinicWeekend.saturday, clinicWeekend.sunday);
+  }, [activeTab, clinicWeekend, fetchWeekendSlots]);
 
   // ─── Fetch availability ───────────────────────────────────
   const fetchAvailability = useCallback(async () => {
@@ -278,9 +316,68 @@ export default function DirectorPage() {
       const res = await fetch('/api/clinics/generate-codes', { method: 'POST' });
       if (!res.ok) { const d = await res.json(); setClinicMsg({ type: 'error', text: d.error ?? 'Failed' }); return; }
       setClinicMsg({ type: 'success', text: 'Access codes generated for the week.' });
-      fetchClinicSlots(clinicDate);
+      fetchWeekendSlots(clinicWeekend.saturday, clinicWeekend.sunday);
     } catch { setClinicMsg({ type: 'error', text: 'Code generation failed' }); }
     finally { setCodesGenerating(false); }
+  }
+
+  // ─── Clinic attendee management ───────────────────────────
+  async function toggleSlot(slotId: string) {
+    if (expandedSlotId === slotId) {
+      setExpandedSlotId(null);
+      setSlotMemberSearch('');
+      setSlotMemberResults([]);
+      return;
+    }
+    setExpandedSlotId(slotId);
+    setSlotMemberSearch('');
+    setSlotMemberResults([]);
+    if (!slotAttendees[slotId]) await fetchSlotAttendees(slotId);
+  }
+
+  async function searchMembersForSlot(q: string) {
+    setSlotMemberSearch(q);
+    if (!q.trim()) { setSlotMemberResults([]); return; }
+    setSlotMemberSearching(true);
+    try {
+      const res = await fetch(`/api/members?search=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setSlotMemberResults(Array.isArray(data) ? data.slice(0, 8) : []);
+    } catch { setSlotMemberResults([]); }
+    finally { setSlotMemberSearching(false); }
+  }
+
+  async function addMemberToSlot(slotId: string, memberId: string) {
+    setAddingMemberId(memberId);
+    try {
+      const res = await fetch('/api/staff/clinics/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot_id: slotId, member_id: memberId }),
+      });
+      const d = await res.json();
+      if (!res.ok) { setClinicMsg({ type: 'error', text: d.error ?? 'Failed to add member' }); return; }
+      setSlotMemberSearch('');
+      setSlotMemberResults([]);
+      await fetchSlotAttendees(slotId);
+      // Refresh slot counts
+      fetchWeekendSlots(clinicWeekend.saturday, clinicWeekend.sunday);
+    } catch { setClinicMsg({ type: 'error', text: 'Failed to add member' }); }
+    finally { setAddingMemberId(null); }
+  }
+
+  async function removeMemberFromSlot(signupId: string, slotId: string) {
+    setRemovingSignupId(signupId);
+    try {
+      const res = await fetch(`/api/clinics/signup/${signupId}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); setClinicMsg({ type: 'error', text: d.error ?? 'Failed to remove' }); return; }
+      setSlotAttendees(prev => ({
+        ...prev,
+        [slotId]: (prev[slotId] ?? []).filter(a => a.id !== signupId),
+      }));
+      fetchWeekendSlots(clinicWeekend.saturday, clinicWeekend.sunday);
+    } catch { setClinicMsg({ type: 'error', text: 'Failed to remove member' }); }
+    finally { setRemovingSignupId(null); }
   }
 
   // ─── Approve / reject availability ───────────────────────
@@ -505,7 +602,7 @@ export default function DirectorPage() {
                               onMouseLeave={e => e.currentTarget.style.background = 'var(--staff-card)'}
                             >
                               <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--crimson)' : 'var(--staff-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-                                {new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                                {new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' })}
                               </div>
                               <div style={{ fontSize: 18, fontFamily: 'var(--font-ui)', color: 'var(--staff-text)', marginBottom: 16 }}>
                                 {new Date(dateStr + 'T12:00:00').getDate()}
@@ -743,46 +840,135 @@ export default function DirectorPage() {
                 <span className="staff-section-label">Director</span>
                 <h1 className="staff-page-title">Clinics</h1>
               </div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div className="date-controls">
-                  <button onClick={() => setClinicDate(d => addDays(d, -1))}>‹</button>
-                  <span className="date-display">{fmtDate(clinicDate)}</span>
-                  <button onClick={() => setClinicDate(d => addDays(d, 1))}>›</button>
-                  <input type="date" className="staff-input" style={{ width: 'auto' }} value={clinicDate} onChange={e => setClinicDate(e.target.value)} />
-                </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <span style={{ color: 'var(--staff-muted)', fontSize: 13 }}>
+                  {fmtDateFull(clinicWeekend.saturday)} – {fmtDateFull(clinicWeekend.sunday)}
+                </span>
                 <button className="btn-staff-primary" disabled={codesGenerating} onClick={generateCodes}>
-                  {codesGenerating ? 'Generating…' : '+ Generate Codes'}
+                  {codesGenerating ? 'Generating…' : 'Generate Codes'}
                 </button>
               </div>
             </div>
 
-            {clinicMsg && <div className={clinicMsg.type === 'success' ? 'staff-success' : 'staff-error'}>{clinicMsg.text}</div>}
+            {clinicMsg && (
+              <div className={clinicMsg.type === 'success' ? 'staff-success' : 'staff-error'} style={{ cursor: 'pointer' }} onClick={() => setClinicMsg(null)}>
+                {clinicMsg.text}
+              </div>
+            )}
 
-            {clinicsLoading ? (
-              <div className="staff-empty">Loading slots…</div>
-            ) : clinicSlots.length === 0 ? (
-              <div className="staff-empty">No clinic slots for this date.</div>
+            {clinicWeekendLoading ? (
+              <div className="staff-empty">Loading sessions…</div>
             ) : (
-              <table className="staff-table">
-                <thead><tr><th>Time</th><th>Restriction</th><th>Signed Up</th><th>Capacity</th><th>Status</th><th>Access Code</th></tr></thead>
-                <tbody>
-                  {clinicSlots.map(slot => (
-                    <tr key={slot.id}>
-                      <td className="td-primary">{slot.hour}:00 AM</td>
-                      <td>{slot.gender_restriction ?? '—'}</td>
-                      <td>{slot.signed_up_count}</td>
-                      <td>{slot.capacity}</td>
-                      <td><span className={`badge badge-${slot.is_full ? 'cancelled' : 'available'}`}>{slot.is_full ? 'Full' : 'Open'}</span></td>
-                      <td>
-                        {slot.access_code
-                          ? <span style={{ fontFamily: 'monospace', color: '#4ade80', fontSize: 13, letterSpacing: '0.12em' }}>{slot.access_code}</span>
-                          : <span style={{ color: 'var(--staff-dim)', fontSize: 11 }}>Not generated</span>
-                        }
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginTop: 8 }}>
+                {([
+                  { label: 'Saturday', date: clinicWeekend.saturday, slots: satSlots },
+                  { label: 'Sunday',   date: clinicWeekend.sunday,   slots: sunSlots },
+                ] as const).map(({ label, date, slots }) => (
+                  <div key={date}>
+                    <h2 style={{ fontFamily: 'var(--font-label)', fontSize: 13, color: 'var(--staff-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                      {label} · {fmtDateFull(date)}
+                    </h2>
+                    {slots.length === 0 ? (
+                      <div className="staff-empty" style={{ fontSize: 13 }}>No sessions.</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {slots.map(slot => {
+                          const isExpanded = expandedSlotId === slot.id;
+                          const attendees = slotAttendees[slot.id] ?? [];
+                          const restrictionLabel = slot.gender_restriction === 'women_only' ? 'Women' : slot.gender_restriction === 'men_only' ? 'Men' : 'Mixed';
+                          return (
+                            <div key={slot.id} className="staff-card" style={{ padding: 0, overflow: 'hidden' }}>
+                              {/* Session header — click to expand */}
+                              <button
+                                onClick={() => toggleSlot(slot.id)}
+                                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left' }}
+                              >
+                                <span style={{ fontFamily: 'var(--font-label)', fontSize: 15, color: 'var(--staff-text)', minWidth: 72 }}>{fmtHour(slot.hour)}</span>
+                                <span style={{ fontSize: 12, color: 'var(--staff-muted)', flex: 1 }}>{restrictionLabel}</span>
+                                <span style={{ fontSize: 12, color: slot.is_full ? 'var(--crimson)' : 'var(--staff-muted)' }}>
+                                  {slot.signed_up_count}/{slot.capacity}
+                                </span>
+                                {slot.access_code
+                                  ? <span style={{ fontFamily: 'monospace', color: '#4ade80', fontSize: 11, letterSpacing: '0.1em' }}>{slot.access_code}</span>
+                                  : <span style={{ fontSize: 11, color: 'var(--staff-dim)' }}>No code</span>
+                                }
+                                <span style={{ color: 'var(--staff-muted)', fontSize: 12, marginLeft: 4 }}>{isExpanded ? '▲' : '▼'}</span>
+                              </button>
+
+                              {/* Expanded: attendees + add member */}
+                              {isExpanded && (
+                                <div style={{ borderTop: '1px solid var(--staff-border)', padding: '14px 16px' }}>
+
+                                  {/* Attendee list */}
+                                  {attendeesLoading && !slotAttendees[slot.id] ? (
+                                    <div style={{ color: 'var(--staff-muted)', fontSize: 13, marginBottom: 12 }}>Loading attendees…</div>
+                                  ) : attendees.length === 0 ? (
+                                    <div style={{ color: 'var(--staff-muted)', fontSize: 13, marginBottom: 12 }}>No attendees yet.</div>
+                                  ) : (
+                                    <div style={{ marginBottom: 14 }}>
+                                      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--staff-muted)', marginBottom: 8 }}>Attendees ({attendees.length})</div>
+                                      {attendees.map(a => (
+                                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0', borderBottom: '1px solid var(--staff-border)' }}>
+                                          <span style={{ flex: 1, fontSize: 13, color: 'var(--staff-text)' }}>{a.display_name}</span>
+                                          {a.audit_number && <span style={{ fontSize: 11, color: 'var(--staff-muted)', fontFamily: 'monospace' }}>#{a.audit_number}</span>}
+                                          {a.guest_count > 0 && <span style={{ fontSize: 11, color: 'var(--staff-dim)' }}>+{a.guest_count} guest{a.guest_count > 1 ? 's' : ''}</span>}
+                                          <button
+                                            className="btn-staff-danger"
+                                            style={{ padding: '3px 10px', fontSize: 11 }}
+                                            disabled={removingSignupId === a.id}
+                                            onClick={() => removeMemberFromSlot(a.id, slot.id)}
+                                          >
+                                            {removingSignupId === a.id ? '…' : 'Remove'}
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Add member */}
+                                  <div>
+                                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--staff-muted)', marginBottom: 8 }}>Add Member</div>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                      <input
+                                        className="staff-input"
+                                        style={{ flex: 1, fontSize: 13 }}
+                                        placeholder="Search by name or audit #"
+                                        value={slotMemberSearch}
+                                        onChange={e => searchMembersForSlot(e.target.value)}
+                                      />
+                                    </div>
+                                    {slotMemberSearching && (
+                                      <div style={{ fontSize: 12, color: 'var(--staff-muted)', marginTop: 6 }}>Searching…</div>
+                                    )}
+                                    {slotMemberResults.length > 0 && (
+                                      <div style={{ marginTop: 6, border: '1px solid var(--staff-border)', borderRadius: 6, overflow: 'hidden' }}>
+                                        {slotMemberResults.map(m => (
+                                          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: '1px solid var(--staff-border)', background: 'var(--staff-card)' }}>
+                                            <span style={{ flex: 1, fontSize: 13, color: 'var(--staff-text)' }}>{m.first_name} {m.last_name}</span>
+                                            <span style={{ fontSize: 11, color: 'var(--staff-muted)', fontFamily: 'monospace' }}>#{m.audit_number}</span>
+                                            <button
+                                              className="btn-staff-primary"
+                                              style={{ padding: '3px 12px', fontSize: 11 }}
+                                              disabled={addingMemberId === m.id}
+                                              onClick={() => addMemberToSlot(slot.id, m.id)}
+                                            >
+                                              {addingMemberId === m.id ? '…' : 'Add'}
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </>
         )}
@@ -817,7 +1003,7 @@ export default function DirectorPage() {
                       <td>{a.unavailable_to.split('T')[0]}</td>
                       <td style={{ maxWidth: 200, fontSize: 12 }}>{a.reason ?? '—'}</td>
                       <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
-                      <td>{a.approved_at ? new Date(a.approved_at).toLocaleDateString() : '—'}</td>
+                      <td>{a.approved_at ? new Date(a.approved_at).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</td>
                       <td style={{ textAlign: 'right' }}>
                         {a.status === 'pending' && (
                           <span style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

@@ -90,7 +90,7 @@ function formatDateKey(d: Date): string {
 
 function formatDateLong(dateStr: string): string {
   const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
 }
 
 function formatDateShort(dateStr: string, index: number): { day: string; num: string } {
@@ -98,7 +98,7 @@ function formatDateShort(dateStr: string, index: number): { day: string; num: st
   const date = new Date(y, m - 1, d);
   if (index === 0) return { day: 'TODAY', num: String(d) };
   return {
-    day: date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
+    day: date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' }).toUpperCase(),
     num: String(d),
   };
 }
