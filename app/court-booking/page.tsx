@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TimezoneNotice from '@/components/TimezoneNotice';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface Court {
@@ -756,6 +757,8 @@ export default function CourtBookingPage() {
 
             </div>
           </div>
+
+          {filtersActive && <TimezoneNotice />}
 
           {/* Map Layout */}
           <div className="map-layout">

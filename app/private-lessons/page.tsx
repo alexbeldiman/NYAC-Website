@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TimezoneNotice from '@/components/TimezoneNotice';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface CoachProfile {
@@ -384,7 +385,9 @@ export default function PrivateLessonsPage() {
     const now = new Date();
     const todayISO = dateISO(now);
     return (
-      <div className="date-slot-list">
+      <>
+        <TimezoneNotice />
+        <div className="date-slot-list">
         {TIME_SLOTS.map(slot => {
           const [sh] = slot.split(':').map(Number);
           const nowET = new Date(now.toLocaleString('en-US', { timeZone: ET_TZ }));
@@ -407,6 +410,7 @@ export default function PrivateLessonsPage() {
           );
         })}
       </div>
+      </>
     );
   }
 
@@ -465,7 +469,9 @@ export default function PrivateLessonsPage() {
     const days = getWeekDays(weekOffset);
 
     return (
-      <div className="pl-grid-wrapper">
+      <>
+        <TimezoneNotice />
+        <div className="pl-grid-wrapper">
         <table id="pl-coach-grid-table">
           <thead>
             <tr>
@@ -521,6 +527,7 @@ export default function PrivateLessonsPage() {
           </tbody>
         </table>
       </div>
+      </>
     );
   }
 

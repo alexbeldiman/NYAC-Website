@@ -15,6 +15,11 @@ export default function TimezoneNotice() {
     if (tz !== ET_TZ) {
       setLocalTz(tz);
       setShow(true);
+      const timer = setTimeout(() => {
+        sessionStorage.setItem(DISMISSED_KEY, '1');
+        setShow(false);
+      }, 10000);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -27,20 +32,19 @@ export default function TimezoneNotice() {
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 9999,
+      width: '100%',
       background: '#1a1a2e',
       color: '#e0e0e0',
       fontSize: 13,
-      padding: '8px 16px',
+      padding: '10px 14px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: 'space-between',
       gap: 12,
-      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      borderRadius: 6,
+      border: '1px solid rgba(255,255,255,0.1)',
+      marginBottom: 12,
+      boxSizing: 'border-box',
     }}>
       <span>
         All times are shown in <strong>Eastern Time (ET)</strong>.
@@ -54,10 +58,10 @@ export default function TimezoneNotice() {
           border: 'none',
           color: '#a0a0a0',
           cursor: 'pointer',
-          fontSize: 16,
+          fontSize: 18,
           lineHeight: 1,
-          padding: '0 4px',
-          marginLeft: 8,
+          padding: '0 2px',
+          flexShrink: 0,
         }}
       >
         ×
