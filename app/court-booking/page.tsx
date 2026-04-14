@@ -405,7 +405,6 @@ export default function CourtBookingPage() {
 
   return (
     <>
-      <TimezoneNotice />
       <style suppressHydrationWarning>{`
         #slim-hero {
           height: 320px;
@@ -758,6 +757,8 @@ export default function CourtBookingPage() {
 
             </div>
           </div>
+
+          {filtersActive && <TimezoneNotice />}
 
           {/* Map Layout */}
           <div className="map-layout">
